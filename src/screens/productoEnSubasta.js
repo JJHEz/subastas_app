@@ -103,9 +103,13 @@ export default function ProductoEnSubasta() {
                 <Text>Cargando producto...</Text>
             )}
 
-            <Text style={styles.tiempoTexto}>
-                {tiempo > 0 ? formatoDeTiempo(tiempo) : '¡Tiempo terminado!'}
-            </Text>
+            <View style={styles.ContenedorTiempo}>
+                <Text>Ganando</Text>
+                <Text>Rodrigo</Text>
+                <Text style={styles.textoTiempo}>
+                    {tiempo > 0 ? formatoDeTiempo(tiempo) : '¡Tiempo terminado!'}
+                </Text>
+            </View>
             
         </View>
     );
@@ -140,11 +144,18 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 
-    tiempoTexto: {
+    ContenedorTiempo: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: 'red',
+        borderColor:'black',
+        borderWidth:4,
+        padding:50,
+        borderRadius:80,
+        backgroundColor:'white',
     },
+    textoTiempo: {
+        fontSize:15,
+    }
     
 
   });
