@@ -12,7 +12,6 @@ export default function ProductoEnSubasta() {
     const [producto, setProducto] = useState(null);
     const [tiempo, setTiempo] = useState(0); // Tiempo inicial en segundos
 
-
     const getProductoPorID = async () => {
         try {
             const productoID = "2"; // <-- aquí pones el ID específico
@@ -30,17 +29,17 @@ export default function ProductoEnSubasta() {
         }
     };
 
-    // Ejecutar la función automáticamente cuando el componente se monta
     useEffect(() => {
-        getProductoPorID();
-    }, []);  // El arreglo vacío asegura que se ejecute solo una vez al montar el componente
+        getProductoPorID(); //carga el producto inicialmente
+    }, []); 
 
-    const getTiempo = () =>{
-        if(producto){
-            const tiempoInicio = producto.hora_de_subasta;
+    const getTiempo = async () =>{ 
+        if(producto){    //Tranforma el tiempo en segundos
+            const tiempoActualDeBolivia = await getHoraDelInternet();
             const tiempoFin = producto.hora_fin_subasta;
 
-            const [horaInicio, minutoInicio] = tiempoInicio.split(':').map(Number);
+            const [horaInicio, minutoInicio] = tiempoActualDeBolivia.split(':').map(Number);
+
             const [horaFin, minutoFin] = tiempoFin.split(':').map(Number);
 
             // Crear fechas usando el día actual
@@ -53,23 +52,39 @@ export default function ProductoEnSubasta() {
 
             return diferenciaSegundos;
 
-            console.log("Hora de inicio:", tiempoInicio);
-            console.log("Hora de fin:", tiempoFin);
-            console.log("Diferencia en segundos" + diferenciaSegundos);
         } else {
             console.log("Producto aún no cargado");
         }
     };
 
-    useEffect(() => { //Metodo solo para imprimir los segundos de diferencia
-        if (producto) {
-          setTiempo(getTiempo());
+    const getHoraDelInternet = async () => {
+        try { //utilizamos la api para obtener la hora actual de bolivia
+          const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=America/La_Paz');
+          const data = await response.json();
+          const horaDeBolivia = data.dateTime;
+          const soloHoraYMinutos = horaDeBolivia.substring(11, 16); // "HH:mm"
+          return soloHoraYMinutos;
+        } catch (error) {
+          console.error("Error al obtener hora de Bolivia:", error);
+          return null;
         }
+      };
+
+    useEffect(() => { //Metodo solo para imprimir los segundos de diferencia
+        const calcularTiempo = async () => {
+            if (producto) {
+              const segundos = await getTiempo();
+              console.log("Tiempo del conometro:", segundos);
+              setTiempo(segundos);
+            }
+          };
+        
+          calcularTiempo();
     }, [producto]); // Se ejecuta cuando producto cambia
 
 
 
-    useEffect(() => {
+    useEffect(() => { // Descuenta el tiempo progresivamente
         if (tiempo === 0) return; // Si ya llegó a 0, detener
         const intervalo = setInterval(() => {
           setTiempo((prevTiempo) => prevTiempo - 1);
