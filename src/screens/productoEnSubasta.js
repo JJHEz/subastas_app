@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, Button, TextInput, Image, StyleSheet } from 'react-native';
+import { Text, View, Button, TextInput, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import database from "../config/firebase"
-import { collection, addDoc, getDocs, getDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, doc, setDoc, query, limit, where, orderBy } from 'firebase/firestore';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 
 
@@ -11,6 +11,8 @@ export default function ProductoEnSubasta() {
     // Estado para almacenar los datos del producto
     const [producto, setProducto] = useState(null);
     const [tiempo, setTiempo] = useState(0); // Tiempo inicial en segundos
+
+
 
     const getProductoPorID = async () => {
         try {
@@ -31,7 +33,9 @@ export default function ProductoEnSubasta() {
 
     useEffect(() => {
         getProductoPorID(); //carga el producto inicialmente
-    }, []); 
+    }, []);
+
+
 
     const getTiempo = async () =>{ 
         if(producto){    //Tranforma el tiempo en segundos
@@ -93,12 +97,84 @@ export default function ProductoEnSubasta() {
         return () => clearInterval(intervalo); // Limpiar el intervalo al desmontar
       }, [tiempo]);
 
-      const formatoDeTiempo = (segundos) => {
+    const formatoDeTiempo = (segundos) => {
         const horas = String(Math.floor(segundos / 3600)).padStart(2, '0');
         const minutos = String(Math.floor((segundos % 3600) / 60)).padStart(2, '0');
         const segs = String(segundos % 60).padStart(2, '0');
         return `${horas}:${minutos}:${segs}`;
-      };
+    };
+
+
+    const pujas = async (incremento) => {
+        
+        const pujaMayor = await precioMayorPujas(parseInt(producto.idProducto));
+
+        const ofertasSnapshot = await getDocs(collection(database, 'oferta')); //obtenemos la coleccion oferta
+        const idsNumericos = ofertasSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id)); // obtener los ids existentes
+        const nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1; // Calcular el nuevo ID (el más alto + 1)
+
+
+        if(pujaMayor){
+
+            const incrementoDePuja = pujaMayor + incremento;
+
+            await setDoc(doc(database, 'oferta', nuevoId.toString()), {
+                precio_oferta_actual: incrementoDePuja,
+                id_producto_fk:parseInt(producto.idProducto),
+                id_Usuario:1,
+                });
+            setProducto((prevProducto) => ({
+                ...prevProducto,
+                precio_base: incrementoDePuja, // Actualiza el precio base
+            }));
+            
+            console.log(" puja mayor :" + puja.pujaActual);
+        }else{
+            const primeraPuja = producto.precio_base + incremento;
+
+            await setDoc(doc(database, 'oferta', nuevoId.toString()), {
+                precio_oferta_actual: primeraPuja,
+                id_producto_fk:parseInt(producto.idProducto),
+                id_Usuario:1,
+                });
+
+                setProducto((prevProducto) => ({
+                    ...prevProducto,
+                    precio_base: primeraPuja, // Actualiza el precio base
+                }));
+            
+
+            console.log("Id del insertado ?: " + nuevoId);
+        }
+
+        
+    }
+
+    const precioMayorPujas = async (idProducto) => {
+        let res = null;
+        try { 
+            const q = query(
+                collection(database, "oferta"),
+                where("id_producto_fk", "==", idProducto),
+                orderBy("precio_oferta_actual", "desc"),
+                limit(1)
+            );
+            const ofertas = await getDocs(q);
+
+            if (!ofertas.empty) {
+                const docData = ofertas.docs[0].data();
+                res = docData.precio_oferta_actual;
+                console.log("Por que :" + res);
+            }
+            return res;
+            
+        } catch (error) {
+            console.log("Error en precio mayor pujas: " + error);
+        }
+    }
+    
+    
+
 
 
     return (
@@ -114,16 +190,27 @@ export default function ProductoEnSubasta() {
                     <Text>Precio Base: ${producto.precio_base}</Text>
                     <Text>Vendido: {producto.vendido ? "Sí" : "No"}</Text>
                 </View>
+
             ):(
                 <Text>Cargando producto...</Text>
             )}
 
+            {producto ?(
             <View style={styles.ContenedorTiempo}>
                 <Text>Ganando</Text>
                 <Text>Rodrigo</Text>
+                <Text>Precio base:{producto.precio_base} Bs</Text>
                 <Text style={styles.textoTiempo}>
                     {tiempo > 0 ? formatoDeTiempo(tiempo) : '¡Tiempo terminado!'}
                 </Text>
+            </View>
+            ):(
+                <Text>Cargando datos...</Text>
+            )}
+            <View>
+                <TouchableOpacity style={styles.boton} onPress={() => pujas(200)}>
+                    <Text style={styles.textoBoton}>Presióname</Text>
+                </TouchableOpacity>
             </View>
             
         </View>
@@ -170,7 +257,19 @@ const styles = StyleSheet.create({
     },
     textoTiempo: {
         fontSize:15,
-    }
+    },
+
+    boton: {
+        backgroundColor: '#4CAF50',
+        padding: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 10
+    },
+    textoBoton: {
+        color: '#fff',
+        fontSize: 16
+    },
     
 
   });
