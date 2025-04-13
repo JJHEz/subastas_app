@@ -19,9 +19,28 @@ export default function ProductoEnSubasta() {
             const productoID = "2"; // <-- aquí pones el ID específico
             const docRef = doc(database, 'producto', productoID);
             const docSnap = await getDoc(docRef);
-
+            
             const datosObtenidos = docSnap.data();
-            setProducto({idProducto:docSnap.id, ...datosObtenidos});
+
+            const pujasExistentes = await precioMayorPujas(parseInt(docSnap.id));
+
+            if(pujasExistentes){
+                setProducto({
+                    idProducto:docSnap.id,
+                    nombre_producto: datosObtenidos.nombre_producto,
+                    estado_del_producto:datosObtenidos.estado_del_producto,
+                    fecha_de_subasta:datosObtenidos.fecha_de_subasta,
+                    hora_de_subasta:datosObtenidos.hora_de_subasta,
+                    ubicacion:datosObtenidos.ubicacion,
+                    precio_base:pujasExistentes,
+                    vendido:datosObtenidos.vendido,
+                    imagen:datosObtenidos.imagen,
+                });
+            }else{
+                setProducto({idProducto:docSnap.id, ...datosObtenidos});
+            }
+            console.log("Pujas existentes: " + pujasExistentes);
+            
 
             console.log("Producto encontrado:", docSnap.data());
             console.log("Id del producto: " + docSnap.id);
@@ -146,8 +165,6 @@ export default function ProductoEnSubasta() {
 
             console.log("Id del insertado ?: " + nuevoId);
         }
-
-        
     }
 
     const precioMayorPujas = async (idProducto) => {
