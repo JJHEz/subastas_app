@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, Button, TextInput, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import database from "../config/firebase"
-import { collection, addDoc, getDocs, getDoc, doc, setDoc, query, limit, where, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, doc, setDoc, query, limit, where, orderBy, updateDoc, docSnap } from 'firebase/firestore';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 
 
 export default function ProductoEnSubasta() {
-
 
     // Estado para almacenar los datos del producto
     const [producto, setProducto] = useState(null);
@@ -19,7 +18,7 @@ export default function ProductoEnSubasta() {
             const productoID = "2"; // <-- aquí pones el ID específico
             const docRef = doc(database, 'producto', productoID);
             const docSnap = await getDoc(docRef);
-            
+
             const datosObtenidos = docSnap.data();
 
             const pujasExistentes = await precioMayorPujas(parseInt(docSnap.id));
@@ -31,6 +30,7 @@ export default function ProductoEnSubasta() {
                     estado_del_producto:datosObtenidos.estado_del_producto,
                     fecha_de_subasta:datosObtenidos.fecha_de_subasta,
                     hora_de_subasta:datosObtenidos.hora_de_subasta,
+                    hora_fin_subasta:datosObtenidos.hora_fin_subasta,
                     ubicacion:datosObtenidos.ubicacion,
                     precio_base:pujasExistentes,
                     vendido:datosObtenidos.vendido,
@@ -59,12 +59,13 @@ export default function ProductoEnSubasta() {
     const getTiempo = async () =>{ 
         if(producto){    //Tranforma el tiempo en segundos
             const tiempoActualDeBolivia = await getHoraDelInternet();
+            
             const tiempoFin = producto.hora_fin_subasta;
-
+           
             const [horaInicio, minutoInicio] = tiempoActualDeBolivia.split(':').map(Number);
-
+            
             const [horaFin, minutoFin] = tiempoFin.split(':').map(Number);
-
+            
             // Crear fechas usando el día actual
             const ahora = new Date();
             const fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), horaInicio, minutoInicio);
@@ -72,7 +73,7 @@ export default function ProductoEnSubasta() {
 
             // Calcular la diferencia en milisegundos y convertir a segundos
             const diferenciaSegundos = Math.floor((fechaFin - fechaInicio) / 1000);
-
+            
             return diferenciaSegundos;
 
         } else {
@@ -116,6 +117,10 @@ export default function ProductoEnSubasta() {
         return () => clearInterval(intervalo); // Limpiar el intervalo al desmontar
       }, [tiempo]);
 
+
+    
+    
+
     const formatoDeTiempo = (segundos) => {
         const horas = String(Math.floor(segundos / 3600)).padStart(2, '0');
         const minutos = String(Math.floor((segundos % 3600) / 60)).padStart(2, '0');
@@ -123,6 +128,21 @@ export default function ProductoEnSubasta() {
         return `${horas}:${minutos}:${segs}`;
     };
 
+    const actualizarEstadoVendido = async () => {
+        try {
+            const pujasExistentes = await precioMayorPujas(parseInt(producto.idProducto));
+            if(pujasExistentes){
+                const docRef = doc(database, 'producto', producto.idProducto);
+                await updateDoc(docRef, {
+                    vendido: true
+                });
+            }
+
+            console.log("Precio base actualizado correctamente.");
+        } catch (error) {
+            console.error("Error al actualizar el precio base: ", error);
+        }
+    };
 
     const pujas = async (incremento) => {
         
@@ -152,7 +172,7 @@ export default function ProductoEnSubasta() {
             const primeraPuja = producto.precio_base + incremento;
 
             await setDoc(doc(database, 'oferta', nuevoId.toString()), {
-                precio_oferta_actual: primeraPuja,
+                precio_oferta_actual:primeraPuja,
                 id_producto_fk:parseInt(producto.idProducto),
                 id_Usuario:1,
                 });
@@ -189,9 +209,14 @@ export default function ProductoEnSubasta() {
             console.log("Error en precio mayor pujas: " + error);
         }
     }
-    
-    
 
+
+    useEffect(() => {
+        if (tiempo === 0) {
+          actualizarEstadoVendido();
+        }
+      }, [tiempo, producto]);
+    
 
 
     return (
@@ -218,7 +243,7 @@ export default function ProductoEnSubasta() {
                 <Text>Rodrigo</Text>
                 <Text>Precio base:{producto.precio_base} Bs</Text>
                 <Text style={styles.textoTiempo}>
-                    {tiempo > 0 ? formatoDeTiempo(tiempo) : '¡Tiempo terminado!'}
+                    {tiempo > 0 ? formatoDeTiempo(tiempo) : "Tiempo terminado" }
                 </Text>
             </View>
             ):(
