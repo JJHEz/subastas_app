@@ -6,7 +6,7 @@ import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 
 
 export default function ProductoEnSubasta() {
-
+    //Hola desde linux
     // Estado para almacenar los datos del producto
     const [producto, setProducto] = useState(null);
     const [tiempo, setTiempo] = useState(0); // Tiempo inicial en segundos
