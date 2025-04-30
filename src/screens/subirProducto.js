@@ -32,7 +32,14 @@ export default function AddProductForm() {
 
   const addProducto = async () => {
     try {
-      await addDoc(collection(database, "producto"), {
+
+      let productoSnapshot = await getDocs(collection(database, 'producto')); //obtenemos la coleccion oferta
+      let idsNumericos = productoSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id)); // obtener los ids existentes
+      let nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1; // Calcular el nuevo ID (el más alto + 1)
+      console.log("id :::::" + nuevoId);
+
+
+      await setDoc(doc(database, "producto",nuevoId.toString()), {
         estado_del_produto:estado,
         fecha_de_subasta: fechaSubasta.toISOString(),
         hora_de_subasta: "13:00",
