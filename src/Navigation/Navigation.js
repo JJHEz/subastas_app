@@ -7,8 +7,8 @@ const Stack = createNativeStackNavigator();
 
 function MyStack() {
     return (
-        <Stack.Navigator initialRouteName="Home">
-            <Stack.Screen name="SubirProducto" component={subirProducto} options={{ headerShown: false }}/>   
+        <Stack.Navigator initialRouteName="subirProducto">
+            <Stack.Screen name="subirProducto" component={subirProducto} options={{ headerShown: false }}/>   
         </Stack.Navigator>
     );
 }
