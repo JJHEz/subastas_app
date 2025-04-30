@@ -11,6 +11,10 @@ import { IconButton, Button } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 
+import database from "../config/firebase"
+import { collection, addDoc, getDocs, getDoc, doc, setDoc, query, limit, where, orderBy, updateDoc, docSnap } from 'firebase/firestore';
+import { getStorage, ref, getDownloadURL } from 'firebase/storage';
+
 export default function AddProductForm() {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
@@ -24,6 +28,32 @@ export default function AddProductForm() {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
     if (!result.canceled) setImageUri(result.assets[0].uri);
   };
+
+
+  const addProducto = async () => {
+    try {
+      await addDoc(collection(database, "producto"), {
+        estado_del_produto:estado,
+        fecha_de_subasta: fechaSubasta.toISOString(),
+        hora_de_subasta: "13:00",
+        hora_fin_subasta: "13:20",
+        id_categoria_fk:category,
+        id_martillero_fk: 1, //modificar esto
+        id_usuario_fk: 2, //Necesitamos el id del usuario
+        imagen: imageUri || null,
+        nombre_producto: title,
+        precio_base: parseFloat(precioBase),
+        ubicacion: "Cochabamba", // por determinarse si añadimos esto a la collección de firebase
+        vendido:false,
+      });
+      alert("Producto guardado con éxito");
+      // Aquí puedes limpiar el formulario si quieres
+    } catch (error) {
+      console.error("Error al guardar:", error);
+      alert("Hubo un error al guardar el producto");
+    }
+  }
+
 
   return (
     <View style={styles.container}>
@@ -77,7 +107,7 @@ export default function AddProductForm() {
           onChangeText={setPrecioBase}
         />
 
-        <TouchableOpacity style={styles.submitBtn}>
+        <TouchableOpacity style={styles.submitBtn} onPress={addProducto}>
           <Text style={{ color: '#fff', fontWeight: 'bold' }}>Añadir producto</Text>
         </TouchableOpacity>
       </View>
