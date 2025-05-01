@@ -29,11 +29,26 @@ export default function AddProductForm() {
   const [value, setValue] = useState(null);
   const [items, setItems] = useState([]);
 
+  const [errors, setErrors] = useState({});
+
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
     if (!result.canceled) setImageUri(result.assets[0].uri);
   };
+
+  const validarCampos = () => {
+      const nuevosErrores = {};
+      if (!title) nuevosErrores.title = true;
+      if (!category) nuevosErrores.category = true;
+      if (!estado) nuevosErrores.estado = true;
+      if (!precioBase) nuevosErrores.precioBase = true;
+      if (!ubicacion) nuevosErrores.ubicacion = true;
+      if (!imageUri) nuevosErrores.imageUri = true;
+    
+      setErrors(nuevosErrores);
+      return Object.keys(nuevosErrores).length === 0;
+    };
 
   useEffect(() => {
     const obtenerCategorias = async () => {
@@ -68,8 +83,12 @@ export default function AddProductForm() {
 
 
   const addProducto = async () => {
+    if (!validarCampos()) {
+      alert('Por favor completa todos los campos');
+      return;
+    }
+  
     try {
-
       let productoSnapshot = await getDocs(collection(database, 'producto')); //obtenemos la coleccion oferta
       let idsNumericos = productoSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id)); // obtener los ids existentes
       let nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1; // Calcular el nuevo ID (el más alto + 1)
@@ -115,47 +134,63 @@ export default function AddProductForm() {
           <Text style={{ fontWeight: 'bold' }}>Alan (4.9)</Text>
         </View>
 
-        <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.preview} />
-          ) : (
-            <>
-              <IconButton icon="plus-box" size={30} />
-              <Text>Añadir fotos</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        <View style={styles.inputRow}>
+          {errors.imageUri && <Text style={styles.asterisk}> *</Text>}
+          <TouchableOpacity onPress={pickImage} style={[styles.imagePicker, { flex: 1 }]}>
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.preview} />
+            ) : (
+              <>
+                <IconButton icon="plus-box" size={30} />
+                <Text>Añadir fotos</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
 
-        <TextInput style={styles.input} placeholder="Nombre" value={title} onChangeText={setTitle} />
+        <View style={styles.inputRow}>
+          {errors.title && <Text style={styles.asterisk}> *</Text>}
+          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Nombre" value={title} onChangeText={setTitle} />
+        </View>
 
-        <DropDownPicker style={styles.input}
-          open={open}
-          value={value}
-          items={items}
-          setOpen={setOpen}
-          setValue={(val) => {
-            setValue(val);
-            setCategory(val); // Guardas el ID en category
-          }}
-          setItems={setItems}
-          placeholder="Selecciona una categoría"
-        />
+        <View style={styles.inputRow}>
+          {errors.category && <Text style={styles.asterisk}> *</Text>}
+          <DropDownPicker style={styles.input}
+            open={open}
+            value={value}
+            items={items}
+            setOpen={setOpen}
+            setValue={(val) => {
+              setValue(val);
+              setCategory(val); // Guardas el ID en category
+            }}
+            setItems={setItems}
+            placeholder="Selecciona una categoría"
+          />
+        </View>
 
 
 
-
-        <TextInput style={styles.input} placeholder="Estado" value={estado} onChangeText={setEstado} />
-
+        <View style={styles.inputRow}>
+          {errors.estado && <Text style={styles.asterisk}> *</Text>}
+          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Estado" value={estado} onChangeText={setEstado} />
+        </View>
         
+        <View style={styles.inputRow}>
+          {errors.precioBase && <Text style={styles.asterisk}> *</Text>}
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Precio Base"
+            keyboardType="numeric"
+            value={precioBase}
+            onChangeText={setPrecioBase}
+          />
+        </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Precio Base"
-          keyboardType="numeric"
-          value={precioBase}
-          onChangeText={setPrecioBase}
-        />
-        <TextInput style={styles.input} placeholder="Ubicación" value={ubicacion} onChangeText={setUbicacion} />
+        <View style={styles.inputRow}>
+          {errors.ubicacion && <Text style={styles.asterisk}> *</Text>}
+          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Ubicación" value={ubicacion} onChangeText={setUbicacion} />
+        </View>
 
         <TouchableOpacity style={styles.submitBtn} onPress={addProducto}>
           <Text style={{ color: '#fff', fontWeight: 'bold' }}>Añadir producto</Text>
@@ -222,6 +257,20 @@ const styles = StyleSheet.create({
     },
     botonRegresar: {
         marginTop: 30,
+    },
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      position: 'relative', // importante
+    },
+    asterisk: {
+      position: 'absolute',
+      left: -15, // cámbialo a -20, -30, etc. para moverlo más a la derecha
+      top: '50%',
+      transform: [{ translateY: -10 }],
+      color: 'red',
+      fontWeight: 'bold',
+      fontSize: 16,
     },
   });
   
