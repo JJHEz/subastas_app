@@ -116,6 +116,14 @@ export default function AddProductForm() {
         vendido:false,
       });
       alert("Producto guardado con éxito");
+      setTitle('');
+      setCategory('');
+      setEstado('');
+      setPrecioBase('');
+      setUbicacion('');
+      setImageUri(null);
+      setValue(null);
+      setErrors({});
       // Aquí puedes limpiar el formulario si quieres
     } catch (error) {
       console.error("Error al guardar:", error);
