@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,9 @@ import {
   Image,
 } from 'react-native';
 import { IconButton, Button } from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
+import DropDownPicker from 'react-native-dropdown-picker';
+
 
 import database from "../config/firebase"
 import { collection, getDocs, doc, setDoc, query, limit, where, orderBy, updateDoc, docSnap } from 'firebase/firestore';
@@ -19,15 +20,38 @@ export default function AddProductForm() {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [estado, setEstado] = useState('');
-  const [fechaSubasta, setFechaSubasta] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  
   const [precioBase, setPrecioBase] = useState('');
+  const [ubicacion, setUbicacion] = useState('');
   const [imageUri, setImageUri] = useState(null);
+
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(null);
+  const [items, setItems] = useState([]);
+
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
     if (!result.canceled) setImageUri(result.assets[0].uri);
   };
+
+  useEffect(() => {
+    const obtenerCategorias = async () => {
+      try {
+        const snapshot = await getDocs(collection(database, 'categoria'));
+        const lista = snapshot.docs.map(doc => ({
+          label: doc.data().nombre_categoria,
+          value: parseInt(doc.id), // o usa otro campo como `doc.data().id`
+        }));
+        console.log(lista)
+        setItems(lista);
+      } catch (error) {
+        console.error('Error al obtener categorías:', error);
+      }
+    };
+  
+    obtenerCategorias();
+  }, []);
 
 
   const subirImagenAFirebase = async (uri, nombreArchivo) => {
@@ -60,7 +84,7 @@ export default function AddProductForm() {
 
       await setDoc(doc(database, "producto",nuevoId.toString()), {
         estado_del_produto:estado,
-        fecha_de_subasta: fechaSubasta.toISOString(),
+        fecha_de_subasta: "01-05-2025",
         hora_de_subasta: "13:00",
         hora_fin_subasta: "13:20",
         id_categoria_fk:category,
@@ -69,7 +93,7 @@ export default function AddProductForm() {
         imagen: downloadURL,
         nombre_producto: title,
         precio_base: parseFloat(precioBase),
-        ubicacion: "Cochabamba", // por determinarse si añadimos esto a la collección de firebase
+        ubicacion: ubicacion, // por determinarse si añadimos esto a la collección de firebase
         vendido:false,
       });
       alert("Producto guardado con éxito");
@@ -102,28 +126,27 @@ export default function AddProductForm() {
           )}
         </TouchableOpacity>
 
-        <TextInput style={styles.input} placeholder="Título" value={title} onChangeText={setTitle} />
-        <TextInput style={styles.input} placeholder="Categoría" value={category} onChangeText={setCategory} />
+        <TextInput style={styles.input} placeholder="Nombre" value={title} onChangeText={setTitle} />
+
+        <DropDownPicker style={styles.input}
+          open={open}
+          value={value}
+          items={items}
+          setOpen={setOpen}
+          setValue={(val) => {
+            setValue(val);
+            setCategory(val); // Guardas el ID en category
+          }}
+          setItems={setItems}
+          placeholder="Selecciona una categoría"
+        />
+
+
+
+
         <TextInput style={styles.input} placeholder="Estado" value={estado} onChangeText={setEstado} />
 
-        <TouchableOpacity
-          style={styles.dateInput}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Text style={{ color: '#555' }}>{fechaSubasta.toLocaleDateString()}</Text>
-          <IconButton icon="calendar" size={20} />
-        </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker
-            value={fechaSubasta}
-            mode="date"
-            display="default"
-            onChange={(event, selectedDate) => {
-              setShowDatePicker(false);
-              if (selectedDate) setFechaSubasta(selectedDate);
-            }}
-          />
-        )}
+        
 
         <TextInput
           style={styles.input}
@@ -132,6 +155,7 @@ export default function AddProductForm() {
           value={precioBase}
           onChangeText={setPrecioBase}
         />
+        <TextInput style={styles.input} placeholder="Ubicación" value={ubicacion} onChangeText={setUbicacion} />
 
         <TouchableOpacity style={styles.submitBtn} onPress={addProducto}>
           <Text style={{ color: '#fff', fontWeight: 'bold' }}>Añadir producto</Text>
