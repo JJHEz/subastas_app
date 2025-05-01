@@ -12,8 +12,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 
 import database from "../config/firebase"
-import { collection, addDoc, getDocs, getDoc, doc, setDoc, query, limit, where, orderBy, updateDoc, docSnap } from 'firebase/firestore';
-import { getStorage, ref, getDownloadURL } from 'firebase/storage';
+import { collection, getDocs, doc, setDoc, query, limit, where, orderBy, updateDoc, docSnap } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function AddProductForm() {
   const [title, setTitle] = useState('');
@@ -30,13 +30,32 @@ export default function AddProductForm() {
   };
 
 
+  const subirImagenAFirebase = async (uri, nombreArchivo) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+  
+    const storage = getStorage();
+    const storageRef = ref(storage, `productos/${nombreArchivo}`);
+  
+    await uploadBytes(storageRef, blob);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
+  };  
+
+
   const addProducto = async () => {
     try {
 
       let productoSnapshot = await getDocs(collection(database, 'producto')); //obtenemos la coleccion oferta
       let idsNumericos = productoSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id)); // obtener los ids existentes
       let nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1; // Calcular el nuevo ID (el más alto + 1)
-      console.log("id :::::" + nuevoId);
+
+      let downloadURL = null;
+
+      if (imageUri) {
+        const nombreOriginal = imageUri.split('/').pop(); // ejemplo: imagen.jpg
+        downloadURL = await subirImagenAFirebase(imageUri, nombreOriginal);
+      }
 
 
       await setDoc(doc(database, "producto",nuevoId.toString()), {
@@ -47,7 +66,7 @@ export default function AddProductForm() {
         id_categoria_fk:category,
         id_martillero_fk: 1, //modificar esto
         id_usuario_fk: 2, //Necesitamos el id del usuario
-        imagen: imageUri || null,
+        imagen: downloadURL,
         nombre_producto: title,
         precio_base: parseFloat(precioBase),
         ubicacion: "Cochabamba", // por determinarse si añadimos esto a la collección de firebase
