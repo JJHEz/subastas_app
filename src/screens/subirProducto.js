@@ -83,8 +83,18 @@ export default function AddProductForm() {
 
 
   const addProducto = async () => {
+
     if (!validarCampos()) {
       alert('Por favor completa todos los campos');
+      return;
+    }
+
+    let sala = await salasDisponibles();
+    let idSala = sala[0];
+    let cantidadProductos = sala[1];
+
+    if(idSala === 0){
+      alert('No hay salas disponobles para asignar su producto') // busca salas segun la categoria que asignaste 
       return;
     }
   
@@ -92,6 +102,7 @@ export default function AddProductForm() {
       let productoSnapshot = await getDocs(collection(database, 'producto')); //obtenemos la coleccion oferta
       let idsNumericos = productoSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id)); // obtener los ids existentes
       let nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1; // Calcular el nuevo ID (el más alto + 1)
+
 
       let downloadURL = null;
 
@@ -107,12 +118,12 @@ export default function AddProductForm() {
         hora_de_subasta: "13:00",
         hora_fin_subasta: "13:20",
         id_categoria_fk:category,
-        id_martillero_fk: 1, //modificar esto
+        id_martillero_fk: idSala,
         id_usuario_fk: 2, //Necesitamos el id del usuario
         imagen: downloadURL,
         nombre_producto: title,
         precio_base: parseFloat(precioBase),
-        ubicacion: ubicacion, // por determinarse si añadimos esto a la collección de firebase
+        ubicacion: ubicacion,
         vendido:false,
       });
       alert("Producto guardado con éxito");
@@ -124,11 +135,44 @@ export default function AddProductForm() {
       setImageUri(null);
       setValue(null);
       setErrors({});
+      await aumentarNumeroDeProductosEnSala(idSala,cantidadProductos);
       // Aquí puedes limpiar el formulario si quieres
     } catch (error) {
       console.error("Error al guardar:", error);
       alert("Hubo un error al guardar el producto");
     }
+  }
+
+  const salasDisponibles = async () =>{
+    const resultados = [];
+    let id = 0;
+    let cantidadDeProductos = 0;
+    try {
+      const martilleroRef = collection(database, 'martillero');
+      const q = query(martilleroRef, where('id_categoria_fk', '==', category), where('nro_productos', '<', 10), orderBy('nro_productos', 'desc'));
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach((doc) => {
+        resultados.push({ id: doc.id, ...doc.data() });
+      });
+      console.log('Martilleros filtrados:', resultados);
+      if (resultados.length > 0) {
+        id = resultados[0].id;
+        cantidadDeProductos = resultados[0].nro_productos;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    return [id, cantidadDeProductos];
+  }
+
+  const aumentarNumeroDeProductosEnSala = async (idSala,catidadDeProductos) =>{
+    let incremento = catidadDeProductos + 1;
+    const docRef = doc(database, 'martillero', idSala);
+
+    await updateDoc(docRef, {
+      nro_productos: incremento
+    });
   }
 
 
