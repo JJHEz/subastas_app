@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { IconButton, Button } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
@@ -13,11 +14,12 @@ import DropDownPicker from 'react-native-dropdown-picker';
 
 
 import database from "../config/firebase"
-import { collection, getDocs, doc, setDoc, query, limit, where, orderBy, updateDoc, docSnap } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, setDoc, query, limit, where, orderBy, updateDoc, docSnap } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function AddProductForm() {
   const [title, setTitle] = useState('');
+  const [descripcion, setDescripcion] = useState('');
   const [category, setCategory] = useState('');
   const [estado, setEstado] = useState('');
   
@@ -31,6 +33,12 @@ export default function AddProductForm() {
 
   const [errors, setErrors] = useState({});
 
+  const [user, setUser] = useState({ nombre: ''});
+
+  const [cargando, setCargando] = useState(false);
+
+
+
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
@@ -40,6 +48,7 @@ export default function AddProductForm() {
   const validarCampos = () => {
       const nuevosErrores = {};
       if (!title) nuevosErrores.title = true;
+      if (!descripcion) nuevosErrores.descripcion = true;
       if (!category) nuevosErrores.category = true;
       if (!estado) nuevosErrores.estado = true;
       if (!precioBase) nuevosErrores.precioBase = true;
@@ -97,6 +106,8 @@ export default function AddProductForm() {
       alert('No hay salas disponobles para asignar su producto') // busca salas segun la categoria que asignaste 
       return;
     }
+
+    setCargando(true); // Mostrar indicador de carga
   
     try {
       let productoSnapshot = await getDocs(collection(database, 'producto')); //obtenemos la coleccion oferta
@@ -119,15 +130,17 @@ export default function AddProductForm() {
         hora_fin_subasta: "13:20",
         id_categoria_fk:category,
         id_martillero_fk: idSala,
-        id_usuario_fk: 2, //Necesitamos el id del usuario
+        id_usuario_fk: 2, //Necesitamos el id del usuario, nos pasaran dinamicamente
         imagen: downloadURL,
         nombre_producto: title,
+        descripcion_producto: descripcion,
         precio_base: parseFloat(precioBase),
         ubicacion: ubicacion,
         vendido:false,
       });
       alert("Producto guardado con éxito");
       setTitle('');
+      setDescripcion('');
       setCategory('');
       setEstado('');
       setPrecioBase('');
@@ -135,6 +148,8 @@ export default function AddProductForm() {
       setImageUri(null);
       setValue(null);
       setErrors({});
+
+      setCargando(false);
       await aumentarNumeroDeProductosEnSala(idSala,cantidadProductos);
       // Aquí puedes limpiar el formulario si quieres
     } catch (error) {
@@ -176,6 +191,21 @@ export default function AddProductForm() {
   }
 
 
+  useEffect(() => {
+    let nombreDesdeDB = getNombreDeUsuario(); // Por el momento funciona sin el await
+    //reemplazar nombre de db aqui
+    setUser({ nombre: nombreDesdeDB });
+
+  }, []);
+
+  const getNombreDeUsuario = async () => {
+    let idUsuario = "1"; // <-- aquí pones el ID específico del usuario
+    const docRef = doc(database, 'usuario', idUsuario);
+    const docSnap = await getDoc(docRef);
+    const datosObtenidos = docSnap.data();
+    return datosObtenidos.nombre;
+  }
+
   return (
     <View style={styles.container}>
       <IconButton icon="arrow-left" style={styles.botonRegresar} onPress={() => {}} />
@@ -183,7 +213,7 @@ export default function AddProductForm() {
       <View style={styles.card}>
         <View style={styles.userRow}>
           <IconButton icon="account" size={20} />
-          <Text style={{ fontWeight: 'bold' }}>Alan (4.9)</Text>
+          <Text style={{ fontWeight: 'bold' }}>{user.nombre}</Text>
         </View>
 
         <View style={styles.inputRow}>
@@ -203,6 +233,11 @@ export default function AddProductForm() {
         <View style={styles.inputRow}>
           {errors.title && <Text style={styles.asterisk}> *</Text>}
           <TextInput style={[styles.input, { flex: 1 }]} placeholder="Nombre" value={title} onChangeText={setTitle} />
+        </View>
+
+        <View style={styles.inputRow}>
+          {errors.descripcion && <Text style={styles.asterisk}> *</Text>}
+          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Descripción" value={descripcion} onChangeText={setDescripcion} />
         </View>
 
         <View style={styles.inputRow}>
@@ -247,6 +282,13 @@ export default function AddProductForm() {
         <TouchableOpacity style={styles.submitBtn} onPress={addProducto}>
           <Text style={{ color: '#fff', fontWeight: 'bold' }}>Añadir producto</Text>
         </TouchableOpacity>
+
+        {cargando && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+        )}
+
       </View>
     </View>
   );
@@ -323,6 +365,18 @@ const styles = StyleSheet.create({
       color: 'red',
       fontWeight: 'bold',
       fontSize: 16,
+    },
+
+    loadingOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 9999, // Asegura que esté encima
+      backgroundColor: 'rgba(0,0,0,0.4)', // Fondo oscuro semi-transparente
+      justifyContent: 'center',
+      alignItems: 'center',
     },
   });
   
