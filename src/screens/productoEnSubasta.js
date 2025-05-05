@@ -1,317 +1,217 @@
-import React, { useState, useEffect } from 'react';
-import { Text, View, Button, TextInput, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import database from "../config/firebase"
-import { collection, addDoc, getDocs, getDoc, doc, setDoc, query, limit, where, orderBy, updateDoc, docSnap } from 'firebase/firestore';
-import { getStorage, ref, getDownloadURL } from 'firebase/storage';
-
+import React, { useEffect, useState, useRef } from 'react';
+import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { getDocs, collection, query, where } from 'firebase/firestore';
+import database from '../config/firebase';
 
 export default function ProductoEnSubasta() {
-    //Hola desde linux
-    // Estado para almacenar los datos del producto
-    const [producto, setProducto] = useState(null);
-    const [tiempo, setTiempo] = useState(0); // Tiempo inicial en segundos
+  const [martillero, setMartillero] = useState(null);
+  const [productos, setProductos] = useState([]);
+  const [productoActual, setProductoActual] = useState(0);
+  const [tiempoRestante, setTiempoRestante] = useState(60);
+  const [mostrarFinalizado, setMostrarFinalizado] = useState(false);
+  const intervaloRef = useRef(null);
 
-
-
-    const getProductoPorID = async () => {
-        try {
-            const productoID = "2"; // <-- aquí pones el ID específico
-            const docRef = doc(database, 'producto', productoID);
-            const docSnap = await getDoc(docRef);
-
-            const datosObtenidos = docSnap.data();
-
-            const pujasExistentes = await precioMayorPujas(parseInt(docSnap.id));
-
-            if(pujasExistentes){
-                setProducto({
-                    idProducto:docSnap.id,
-                    nombre_producto: datosObtenidos.nombre_producto,
-                    estado_del_producto:datosObtenidos.estado_del_producto,
-                    fecha_de_subasta:datosObtenidos.fecha_de_subasta,
-                    hora_de_subasta:datosObtenidos.hora_de_subasta,
-                    hora_fin_subasta:datosObtenidos.hora_fin_subasta,
-                    ubicacion:datosObtenidos.ubicacion,
-                    precio_base:pujasExistentes,
-                    vendido:datosObtenidos.vendido,
-                    imagen:datosObtenidos.imagen,
-                });
-            }else{
-                setProducto({idProducto:docSnap.id, ...datosObtenidos});
-            }
-            console.log("Pujas existentes: " + pujasExistentes);
-            
-
-            console.log("Producto encontrado:", docSnap.data());
-            console.log("Id del producto: " + docSnap.id);
-            
-        } catch (error) {
-            console.error("Error al obtener el producto: ", error);
+  useEffect(() => {
+    const fetchDatos = async () => {
+      try {
+        
+        const martilleroRef = collection(database, 'martillero');
+        const snapshot = await getDocs(query(martilleroRef, where('__name__', '==', '1')));
+        if (!snapshot.empty) {
+          const doc = snapshot.docs[0];
+          setMartillero({ id: doc.id, ...doc.data() });
         }
+
+        
+        const productosRef = collection(database, 'producto');
+        const productosSnap = await getDocs(query(productosRef, where('id_martillero_fk', '==', 1)));
+        const productosData = productosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setProductos(productosData);
+      } catch (error) {
+        console.error("Error al obtener datos:", error);
+      }
     };
 
-    useEffect(() => {
-        getProductoPorID(); //carga el producto inicialmente
-    }, []);
+    fetchDatos();
+  }, []);
 
+  useEffect(() => {
+    if (productos.length === 0 || productoActual >= productos.length) return;
 
+    setTiempoRestante(60); // reiniciar tiempo a 60s para cada producto
 
-    const getTiempo = async () =>{ 
-        if(producto){    //Tranforma el tiempo en segundos
-            const tiempoActualDeBolivia = await getHoraDelInternet();
-            
-            const tiempoFin = producto.hora_fin_subasta;
-           
-            const [horaInicio, minutoInicio] = tiempoActualDeBolivia.split(':').map(Number);
-            
-            const [horaFin, minutoFin] = tiempoFin.split(':').map(Number);
-            
-            // Crear fechas usando el día actual
-            const ahora = new Date();
-            const fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), horaInicio, minutoInicio);
-            const fechaFin = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), horaFin, minutoFin);
-
-            // Calcular la diferencia en milisegundos y convertir a segundos
-            const diferenciaSegundos = Math.floor((fechaFin - fechaInicio) / 1000);
-            
-            return diferenciaSegundos;
-
+    intervaloRef.current = setInterval(() => {
+      setTiempoRestante(prev => {
+        if (prev > 1) {
+          return prev - 1;
         } else {
-            console.log("Producto aún no cargado");
+          clearInterval(intervaloRef.current);
+
+          if (productoActual < productos.length - 1) {
+            setProductoActual(prev => prev + 1);
+          } else {
+            setMostrarFinalizado(true);
+          }
+
+          return 0;
         }
-    };
+      });
+    }, 1000);
 
-    const getHoraDelInternet = async () => {
-        try { //utilizamos la api para obtener la hora actual de bolivia
-          const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=America/La_Paz');
-          const data = await response.json();
-          const horaDeBolivia = data.dateTime;
-          const soloHoraYMinutos = horaDeBolivia.substring(11, 16); // "HH:mm"
-          return soloHoraYMinutos;
-        } catch (error) {
-          console.error("Error al obtener hora de Bolivia:", error);
-          return null;
-        }
-      };
+    return () => clearInterval(intervaloRef.current);
+  }, [productoActual, productos]);
 
-    useEffect(() => { //Metodo solo para imprimir los segundos de diferencia
-        const calcularTiempo = async () => {
-            if (producto) {
-              const segundos = await getTiempo();
-              console.log("Tiempo del conometro:", segundos);
-              setTiempo(segundos);
-            }
-          };
-        
-          calcularTiempo();
-    }, [producto]); // Se ejecuta cuando producto cambia
+  const producto = productos[productoActual];
 
+ 
+  const formatTiempo = (segundos) => {
+    const min = Math.floor(segundos / 60);
+    const seg = segundos % 60;
+    return `${min}:${seg.toString().padStart(2, '0')}`;
+  };
 
+  return (
+    <ScrollView style={styles.scrollContainer}>
+      <View style={styles.container}>
+        <Text style={styles.titulo}>SUBASTAS EN LÍNEA</Text>
 
-    useEffect(() => { // Descuenta el tiempo progresivamente
-        if (tiempo === 0) return; // Si ya llegó a 0, detener
-        const intervalo = setInterval(() => {
-          setTiempo((prevTiempo) => prevTiempo - 1);
-        }, 1000); // Disminuye cada segundo
-    
-        return () => clearInterval(intervalo); // Limpiar el intervalo al desmontar
-      }, [tiempo]);
-
-
-    
-    
-
-    const formatoDeTiempo = (segundos) => {
-        const horas = String(Math.floor(segundos / 3600)).padStart(2, '0');
-        const minutos = String(Math.floor((segundos % 3600) / 60)).padStart(2, '0');
-        const segs = String(segundos % 60).padStart(2, '0');
-        return `${horas}:${minutos}:${segs}`;
-    };
-
-    const actualizarEstadoVendido = async () => {
-        try {
-            const pujasExistentes = await precioMayorPujas(parseInt(producto.idProducto));
-            if(pujasExistentes){
-                const docRef = doc(database, 'producto', producto.idProducto);
-                await updateDoc(docRef, {
-                    vendido: true
-                });
-            }
-
-            console.log("Precio base actualizado correctamente.");
-        } catch (error) {
-            console.error("Error al actualizar el precio base: ", error);
-        }
-    };
-
-    const pujas = async (incremento) => {
-        
-        const pujaMayor = await precioMayorPujas(parseInt(producto.idProducto));
-
-        const ofertasSnapshot = await getDocs(collection(database, 'oferta')); //obtenemos la coleccion oferta
-        const idsNumericos = ofertasSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id)); // obtener los ids existentes
-        const nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1; // Calcular el nuevo ID (el más alto + 1)
-
-
-        if(pujaMayor){
-
-            const incrementoDePuja = pujaMayor + incremento;
-
-            await setDoc(doc(database, 'oferta', nuevoId.toString()), {
-                precio_oferta_actual: incrementoDePuja,
-                id_producto_fk:parseInt(producto.idProducto),
-                id_Usuario:1,
-                });
-            setProducto((prevProducto) => ({
-                ...prevProducto,
-                precio_base: incrementoDePuja, // Actualiza el precio base
-            }));
+        {martillero && (
+          <View style={styles.martilleroCard}>
             
-            console.log(" puja mayor :" + puja.pujaActual);
-        }else{
-            const primeraPuja = producto.precio_base + incremento;
+            <Text style={styles.infoText}>Fecha: {martillero.fecha_ini}</Text>
+            <Text style={styles.infoText}>Hora de inicio: {martillero.hora_ini}</Text>
+            <Text style={styles.infoText}>Hora finalizada: {martillero.hora_fin}</Text>
+            <Text style={styles.infoText}>Productos: {martillero.nro_productos}</Text>
+          </View>
+        )}
 
-            await setDoc(doc(database, 'oferta', nuevoId.toString()), {
-                precio_oferta_actual:primeraPuja,
-                id_producto_fk:parseInt(producto.idProducto),
-                id_Usuario:1,
-                });
+        {producto && !mostrarFinalizado ? (
+          <View key={producto.id} style={styles.productCard}>
+            <Image source={{ uri: producto.imagen }} style={styles.productImage} />
+            <Text style={styles.productText}>Producto: {producto.nombre_producto}</Text>
+            <Text style={styles.productText}>Estado: {producto.estado_del_producto}</Text>
+            <Text style={styles.productText}>Detalle: {producto.descripcion_producto}</Text>
+            <Text style={styles.productText}>Ubicacion: {producto.ubicacion}</Text>
+            <Text style={styles.productText}>Precio base: Bs {producto.precio_base}</Text>
+            <Text style={styles.productText}>⏱ Tiempo: {formatTiempo(tiempoRestante)}</Text>
 
-                setProducto((prevProducto) => ({
-                    ...prevProducto,
-                    precio_base: primeraPuja, // Actualiza el precio base
-                }));
-            
-
-            console.log("Id del insertado ?: " + nuevoId);
-        }
-    }
-
-    const precioMayorPujas = async (idProducto) => {
-        let res = null;
-        try { 
-            const q = query(
-                collection(database, "oferta"),
-                where("id_producto_fk", "==", idProducto),
-                orderBy("precio_oferta_actual", "desc"),
-                limit(1)
-            );
-            const ofertas = await getDocs(q);
-
-            if (!ofertas.empty) {
-                const docData = ofertas.docs[0].data();
-                res = docData.precio_oferta_actual;
-                console.log("Por que :" + res);
-            }
-            return res;
-            
-        } catch (error) {
-            console.log("Error en precio mayor pujas: " + error);
-        }
-    }
-
-
-    useEffect(() => {
-        if (tiempo === 0) {
-          actualizarEstadoVendido();
-        }
-      }, [tiempo, producto]);
-    
-
-
-    return (
-        <View style={styles.container}>
-            {producto ?(
-                <View style={styles.recuadroProducto}>
-                    <Image source={{ uri:producto.imagen }} style={styles.imagen} />
-                    <Text style={ styles.nombreProducto }>Producto: {producto.nombre_producto}</Text>
-                    <Text>Estado: {producto.estado_del_producto}</Text>
-                    <Text>Fecha de Subasta: {producto.fecha_de_subasta}</Text>
-                    <Text>Hora de Subasta: {producto.hora_de_subasta}</Text>
-                    <Text>Ubicación: {producto.ubicacion}</Text>
-                    <Text>Precio Base: ${producto.precio_base}</Text>
-                    <Text>Vendido: {producto.vendido ? "Sí" : "No"}</Text>
-                </View>
-
-            ):(
-                <Text>Cargando producto...</Text>
-            )}
-
-            {producto ?(
-            <View style={styles.ContenedorTiempo}>
-                <Text>Ganando</Text>
-                <Text>Rodrigo</Text>
-                <Text>Precio base:{producto.precio_base} Bs</Text>
-                <Text style={styles.textoTiempo}>
-                    {tiempo > 0 ? formatoDeTiempo(tiempo) : "Tiempo terminado" }
-                </Text>
+            <View style={styles.bidContainer}>
+              <Text style={styles.ganando}>Ganando{"\n"}Alan{"\n"}bs 190</Text>
+              <Text style={styles.subtitulo}>23 participantes</Text>
+              <Text style={styles.estado}>¡Vas Ganando!</Text>
+              <View style={styles.precioOferta}>
+                <Text style={styles.textoOferta}>Bs 200</Text>
+              </View>
+              <TouchableOpacity style={styles.botonPujar}>
+                <Text style={styles.textoBoton}>Pujar</Text>
+              </TouchableOpacity>
             </View>
-            ):(
-                <Text>Cargando datos...</Text>
-            )}
-            <View>
-                <TouchableOpacity style={styles.boton} onPress={() => pujas(200)}>
-                    <Text style={styles.textoBoton}>Presióname</Text>
-                </TouchableOpacity>
-            </View>
-            
-        </View>
-    );
+          </View>
+        ) : mostrarFinalizado && (
+          <Text style={{ fontSize: 20, marginTop: 30, fontWeight: 'bold', color: 'white' }}>
+            🎉🎉 Subasta finalizada 🎉🎉
+          </Text>
+        )}
+      </View>
+    </ScrollView>
+  );
 }
 
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        //justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#007BFF', 
-    },
-
-    recuadroProducto: {
-        marginTop: 20,
-        padding: 15,
-        borderWidth: 1,
-        borderRadius: 10,
-        borderColor: '#ddd',
-        backgroundColor: '#f9f9f9',
-    },
-
-    imagen: {
-        width: 180,
-        height: 180,
-        borderRadius: 10,
-    },
-
-    nombreProducto: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-
-    ContenedorTiempo: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        borderColor:'black',
-        borderWidth:4,
-        padding:50,
-        borderRadius:80,
-        backgroundColor:'white',
-    },
-    textoTiempo: {
-        fontSize:15,
-    },
-
-    boton: {
-        backgroundColor: '#4CAF50',
-        padding: 10,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginTop: 10
-    },
-    textoBoton: {
-        color: '#fff',
-        fontSize: 16
-    },
-    
-
-  });
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: '#007BFF',
+  },
+  container: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  titulo: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginVertical: 16,
+  },
+  martilleroCard: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    width: '100%',
+    alignItems: 'flex-start',
+  },
+  infoText: {
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  productCard: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  productImage: {
+    width: 150,
+    height: 150,
+    resizeMode: 'cover',
+    marginBottom: 10,
+    borderRadius: 12,
+  },
+  productText: {
+    fontSize: 15,
+    marginBottom: 4,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  bidContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  ganando: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    backgroundColor: '#e6e6e6',
+    borderRadius: 60,
+    width: 120,
+    height: 120,
+    paddingVertical: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  subtitulo: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 5,
+  },
+  estado: {
+    fontSize: 16,
+    color: 'green',
+    marginTop: 8,
+  },
+  precioOferta: {
+    marginVertical: 10,
+    backgroundColor: '#e6e6e6',
+    paddingVertical: 8,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+  },
+  textoOferta: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  botonPujar: {
+    backgroundColor: '#00BFFF',
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+    marginTop: 10,
+  },
+  textoBoton: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+});
