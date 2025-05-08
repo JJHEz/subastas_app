@@ -9,15 +9,25 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~4.0.1",
+    "@react-native-picker/picker": "^2.9.0",
     "@react-navigation/native": "^7.0.19",
     "@react-navigation/native-stack": "^7.3.3",
-    "expo": "~52.0.41",
+    "expo": "~53.0.0",
+    "expo-image-picker": "~16.0.6",
     "expo-status-bar": "~2.0.1",
     "firebase": "^11.5.0",
     "react": "18.3.1",
-    "react-native": "0.76.7",
+    "react-dom": "18.3.1",
+    "react-native": "0.76.9",
+    "react-native-dropdown-picker": "^5.4.6",
+    "react-native-qrcode-svg": "^6.3.15",
     "react-native-safe-area-context": "4.12.0",
-    "react-native-screens": "~4.4.0"
+    "react-native-screens": "~4.4.0",
+    "react-native-svg": "15.8.0",
+    "react-native-web": "~0.19.13",
+    "yarm": "^0.4.0",
+    "yarn": "^1.22.22"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
