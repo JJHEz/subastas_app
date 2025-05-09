@@ -37,8 +37,10 @@ export default function ProductoEnSubasta() {
 
   useEffect(() => {
     if (productos.length === 0 || productoActual >= productos.length) return;
+    let hora_ini = martillero.hora_ini;
+    let hora_fin = martillero.hora_fin;
 
-    setTiempoRestante(60); // reiniciar tiempo a 60s para cada producto
+    setTiempoRestante(10); // reiniciar tiempo a 60s para cada producto
 
     intervaloRef.current = setInterval(() => {
       setTiempoRestante(prev => {
