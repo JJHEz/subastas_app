@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { getDocs, collection, query, where } from 'firebase/firestore';
+import { getDocs, collection, query, where, onSnapshot } from 'firebase/firestore';
 import database from '../config/firebase';
 
 export default function ProductoEnSubasta() {
@@ -10,6 +10,9 @@ export default function ProductoEnSubasta() {
   const [tiempoRestante, setTiempoRestante] = useState(60);
   const [mostrarFinalizado, setMostrarFinalizado] = useState(false);
   const intervaloRef = useRef(null);
+
+  const [mejorPuja, setMejorPuja] = useState(null);
+
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -37,10 +40,26 @@ export default function ProductoEnSubasta() {
 
   useEffect(() => {
     if (productos.length === 0 || productoActual >= productos.length) return;
+
     let hora_ini = martillero.hora_ini;
     let hora_fin = martillero.hora_fin;
+    let nro_productos = martillero.nro_productos;
+   
+    const [horaInicio, minutoInicio] = hora_ini.split(':').map(Number);
+    const [horaFin, minutoFin] = hora_fin.split(':').map(Number);
+    
+    // Crear fechas usando el día actual
+    const ahora = new Date();
+    const fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), horaInicio, minutoInicio);
+    const fechaFin = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), horaFin, minutoFin);
 
-    setTiempoRestante(10); // reiniciar tiempo a 60s para cada producto
+    // Calcular la diferencia en milisegundos y convertir a segundos
+    const diferenciaSegundos = Math.floor((fechaFin - fechaInicio) / 1000);
+
+    let segundos = parseInt(diferenciaSegundos);
+    let segundosPorProducto = segundos / nro_productos
+
+    setTiempoRestante(segundosPorProducto); // reiniciar tiempo a 60s para cada producto
 
     intervaloRef.current = setInterval(() => {
       setTiempoRestante(prev => {
@@ -64,6 +83,29 @@ export default function ProductoEnSubasta() {
   }, [productoActual, productos]);
 
   const producto = productos[productoActual];
+
+
+useEffect(() => {
+  const pujasRef = collection(database, 'oferta');
+  const q = query(pujasRef, where('id_producto', '==', producto.id));
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const nuevasPujas = snapshot.docs.map(doc => doc.data());
+    
+    // Puedes actualizar el estado para mostrar la última puja
+    if (nuevasPujas.length > 0) {
+      const ultimaPuja = nuevasPujas[nuevasPujas.length - 1];
+      setUltimaPuja(ultimaPuja);
+    }
+  });
+
+  return () => unsubscribe(); // 🔥 Importante: elimina el listener al desmontar el componente
+}, [producto.id]);
+
+
+
+
+
 
  
   const formatTiempo = (segundos) => {
