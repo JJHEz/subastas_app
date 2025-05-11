@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { getDocs, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc } from 'firebase/firestore';
 import database from '../config/firebase';
 
 export default function ProductoEnSubasta() {
@@ -106,46 +106,50 @@ useEffect(() => {
 }, [producto]);
 
 
-const pujas = async () => {
-        
-        const ofertasSnapshot = await getDocs(collection(database, 'oferta')); //obtenemos la coleccion oferta
-        const idsNumericos = ofertasSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id)); // obtener los ids existentes
-        const nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1; // Calcular el nuevo ID (el más alto + 1)
+const pujar = async () => {
+  const ofertasSnapshot = await getDocs(collection(database, 'oferta'));
+  const idsNumericos = ofertasSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id));
+  const nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1;
 
-        let id = parseInt(producto.id);
-        const pujasRef = collection(database, 'oferta');
-        const q = query(pujasRef, where('id_producto_fk', '==', id));
-        const ofertaExistentes = await getDocs(q); // Aquí obtienes los datos
+  let id = parseInt(producto.id);
+  console.log("iddd.-" + id);
+  const pujasRef = collection(database, 'oferta');
+  const q = query(pujasRef, where('id_producto_fk', '==', id));
+  const ofertaExistentes = await getDocs(q);
+  console.log("Documentos encontrados:", ofertaExistentes.docs.length);
+  if (!ofertaExistentes.empty) {
+    try {
+      console.log("if");
+      const primeraPuja = ofertaExistentes.docs[0].data();
+      const precio = primeraPuja.precio_oferta_actual;
+      const incrementoDePuja = precio + (producto.precio_base * 0.10);
 
-        if(ofertaExistentes){
-            try {
-              const primeraPuja = ofertasExistentes.docs[0].data();
-              const precio = primeraPuja.precio_oferta_actual;
-              const incrementoDePuja = precio + (producto.precio_base * 0.10);
+      const refOferta = doc(database, 'oferta', ofertaExistentes.docs[0].id);
+      await updateDoc(refOferta, {
+        precio_oferta_actual: incrementoDePuja,
+        id_usuario: 1
+      });
 
-              const refOferta = doc(database, 'oferta', id);
-              await updateDoc(refOferta, {
-                precio_oferta_actual: incrementoDePuja,
-                id_usuario: 1  // reemplaza por el ID de usuario que corresponda
-              });
-
-            } catch (error) {
-              console.log("Actualizar oferta", error)
-            }
-
-        }else{
-          try {
-            const primeraPuja = producto.precio_base + (producto.precio_base * 0.10);
-            await setDoc(doc(database, 'oferta', nuevoId.toString()), {
-                precio_oferta_actual:primeraPuja,
-                id_producto_fk:parseInt(producto.id),
-                id_usuario:1, //modificar dinamico
-                });
-          } catch (error) {
-            console.log("Error en una nueva oferta", error);
-          }
-        }
+    } catch (error) {
+      console.log("Actualizar oferta", error)
     }
+
+  } else {
+    try {
+      console.log("precio base" + producto.precio_base);
+      const primeraPuja = producto.precio_base + (producto.precio_base * 0.10);
+      console.log("else......");
+      console.log("primerpuj" + primeraPuja);
+      await setDoc(doc(database, 'oferta', nuevoId.toString()), {
+        precio_oferta_actual: primeraPuja,
+        id_producto_fk: parseInt(producto.id),
+        id_usuario: 1
+      });
+    } catch (error) {
+      console.log("Error en una nueva oferta", error);
+    }
+  }
+};
 
     const precioMayorPujas = async (idProducto) => {
         let res = null;
@@ -213,9 +217,9 @@ const pujas = async () => {
               <Text style={styles.subtitulo}>23 participantes</Text>
               <Text style={styles.estado}>¡Vas Ganando!</Text>
               <View style={styles.precioOferta}>
-                <Text style={styles.textoOferta}>Bs 200 </Text>
+                <Text style={styles.textoOferta}>Bs {mejorPuja ? mejorPuja.precio_oferta_actual : producto.precio_base}</Text>
               </View>
-              <TouchableOpacity style={styles.botonPujar}>
+              <TouchableOpacity style={styles.botonPujar} onPress={() => pujar()}>
                 <Text style={styles.textoBoton}>Pujar</Text>
               </TouchableOpacity>
             </View>
