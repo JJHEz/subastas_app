@@ -86,21 +86,25 @@ export default function ProductoEnSubasta() {
 
 
 useEffect(() => {
+  if (productos.length === 0 || productoActual >= productos.length) return;
+  console.log("idddd.-" + producto.id);
+  let id = parseInt(producto.id);
   const pujasRef = collection(database, 'oferta');
-  const q = query(pujasRef, where('id_producto', '==', producto.id));
+  const q = query(pujasRef, where('id_producto_fk', '==', id));
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
     const nuevasPujas = snapshot.docs.map(doc => doc.data());
-    
     // Puedes actualizar el estado para mostrar la última puja
     if (nuevasPujas.length > 0) {
       const ultimaPuja = nuevasPujas[nuevasPujas.length - 1];
-      setUltimaPuja(ultimaPuja);
+      setMejorPuja(ultimaPuja);
+      console.log("Mejor puja:", ultimaPuja); // ✅ Aquí sí refleja lo nuevo
     }
   });
-
+  //{mejorPuja.precio_oferta_actual}
   return () => unsubscribe(); // 🔥 Importante: elimina el listener al desmontar el componente
-}, [producto.id]);
+}, [producto]);
+
 
 
 
@@ -144,7 +148,7 @@ useEffect(() => {
               <Text style={styles.subtitulo}>23 participantes</Text>
               <Text style={styles.estado}>¡Vas Ganando!</Text>
               <View style={styles.precioOferta}>
-                <Text style={styles.textoOferta}>Bs 200</Text>
+                <Text style={styles.textoOferta}>Bs 200 </Text>
               </View>
               <TouchableOpacity style={styles.botonPujar}>
                 <Text style={styles.textoBoton}>Pujar</Text>
