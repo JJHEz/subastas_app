@@ -18,7 +18,7 @@ const Producto = ({ route, navigation }) => {
           <Text>Inicio: {producto.fecha_de_subasta} a las {producto.hora_de_subasta}</Text>
           <Text>Fin: {producto.hora_fin_subasta}</Text>
           <Text>Vendido: {producto.vendido ? "Sí" : "No"}</Text>
-          <Text>Descripción: {producto.descripcion || 'Sin descripción'}</Text>
+          <Text>Descripción: {producto.descripcion_producto || 'Sin descripción'}</Text>
         </View>
       </View>  
 

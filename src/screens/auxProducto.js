@@ -1,39 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { db } from "../config/firebase";
-import { doc, getDoc } from "firebase/firestore";
 
-const Producto1 = ({ route, navigation }) => {
-  const { id } = route.params;  // Recibe el ID del producto
-  //const { user } = route.params;  // Recibe el ID del producto
-  const [producto, setProducto] = useState(null);
-
-  useEffect(() => {
-    const fetchProducto = async () => {
-      try {
-        const docRef = doc(db, "producto", id);  // Obtiene el producto por ID
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          setProducto(docSnap.data());
-        } else {
-          console.log("No such product!");
-        }
-      } catch (error) {
-        console.error("Error al obtener el producto:", error);
-      }
-    };
-
-    fetchProducto();
-  }, [id]);
-
-  if (!producto) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Cargando producto...</Text>
-      </View>
-    );
-  }
+const Producto = ({ route, navigation }) => {
+  const { producto } = route.params;
 
   return (
     <ScrollView style={styles.container}>
@@ -42,6 +11,7 @@ const Producto1 = ({ route, navigation }) => {
         
         <View style={styles.detalles}>
           <Text style={styles.nombre}>{producto.nombre_producto}</Text>
+          <Text>Categoría: {producto.nombre_categoria || 'Sin categoría'}</Text>
           <Text>Estado: {producto.estado_del_producto}</Text>
           <Text>Base: ${producto.precio_base}</Text>
           <Text>Ubicación: {producto.ubicacion}</Text>
@@ -51,6 +21,16 @@ const Producto1 = ({ route, navigation }) => {
           <Text>Descripción: {producto.descripcion || 'Sin descripción'}</Text>
         </View>
       </View>  
+
+      <View style={styles.botones}>
+        <TouchableOpacity style={styles.botonInscribirse} onPress={() => /*alert('Inscrito')*/ navigation.navigate('Garantia')}>
+          <Text style={styles.textoBoton}>Inscribirse a subasta</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.botonParticipar} onPress={() => navigation.goBack()}>
+          <Text style={styles.textoBoton}>Participar</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
@@ -74,7 +54,7 @@ const styles = StyleSheet.create({
     height: 250,
     borderRadius: 10,
     marginBottom: 15,
-    backgroundColor: "#ccc",
+    backgroundColor: "#ccc", // en caso de que no cargue la imagen
   },
   detalles: {
     width: "100%",
@@ -85,6 +65,35 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
+  texto: {
+    fontSize: 16,
+    marginBottom: 5,
+    textAlign: "center",
+  },
+  botones: {
+    alignItems: "center",
+    marginTop: 10,
+  },
+  botonInscribirse: {
+    backgroundColor: "#28a745",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginBottom: 15,
+  },
+  botonParticipar: {
+    backgroundColor: "#28a745",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+  },
+  textoBoton: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
 });
 
-export default Producto1;
+
+export default Producto;

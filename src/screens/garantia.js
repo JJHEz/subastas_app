@@ -4,12 +4,20 @@ import QRCode from 'react-native-qrcode-svg';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function Garantia() {
+  //const { producto} = route.params;
+
   const [qrData, setQrData] = useState('');
   const [imageUri, setImageUri] = useState('');
   const [estadoPago, setEstadoPago] = useState('pendiente');
   const usuarioID = 'U123';
   const subastaID = 'S456';
   const monto = 100;
+
+  /*useEffect(() => {
+    // Opcionalmente puedes usar el usuario y producto aquí si es necesario.
+    console.log("Usuario:", usuario);
+    console.log("Producto:", producto);
+  }, [usuario, producto]);*/
 
   const generarQR = () => {
     const fecha = new Date().toISOString();

@@ -7,7 +7,10 @@ import { db } from "../config/firebase";
 
 //home donde se muestran todos los productos
 
-const Home = ({ navigation }) => {
+const Home = ({ navigation, route }) => {
+  const { id: usuarioId } = route.params || {}; // captura el id del usuario desde la URL
+  const [userId, setUserId] = useState(usuarioId || null); // guarda el id para uso libre
+
   const [productos, setProductos] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [productosFiltrados, setProductosFiltrados] = useState([]);
@@ -19,7 +22,11 @@ const Home = ({ navigation }) => {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
   const [categoriasDropDown, setCategoriasDropDown] = useState([]);
   
-
+  useEffect(() => {
+    if (userId) {
+      console.log("Usuario ID desde la URL:", userId);
+    }
+  }, [userId]);
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -54,7 +61,10 @@ const Home = ({ navigation }) => {
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           const nombreCategoria = categoriasMap[String(data.id_categoria_fk)] || "Sin categoría";
-          items.push({ id: doc.id, ...data, nombre_categoria: nombreCategoria });
+          
+          if (data.vendido === false) {
+            items.push({ id: doc.id, ...data, nombre_categoria: nombreCategoria });
+          }
         });
         console.log("Productos cargados:", items); // controlador de error DEBUG
         setProductos(items);
