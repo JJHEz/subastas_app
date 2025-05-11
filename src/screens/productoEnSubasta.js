@@ -106,6 +106,71 @@ useEffect(() => {
 }, [producto]);
 
 
+const pujas = async () => {
+        
+        const ofertasSnapshot = await getDocs(collection(database, 'oferta')); //obtenemos la coleccion oferta
+        const idsNumericos = ofertasSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id)); // obtener los ids existentes
+        const nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1; // Calcular el nuevo ID (el más alto + 1)
+
+        let id = parseInt(producto.id);
+        const pujasRef = collection(database, 'oferta');
+        const q = query(pujasRef, where('id_producto_fk', '==', id));
+        const ofertaExistentes = await getDocs(q); // Aquí obtienes los datos
+
+        if(ofertaExistentes){
+            try {
+              const primeraPuja = ofertasExistentes.docs[0].data();
+              const precio = primeraPuja.precio_oferta_actual;
+              const incrementoDePuja = precio + (producto.precio_base * 0.10);
+
+              const refOferta = doc(database, 'oferta', id);
+              await updateDoc(refOferta, {
+                precio_oferta_actual: incrementoDePuja,
+                id_usuario: 1  // reemplaza por el ID de usuario que corresponda
+              });
+
+            } catch (error) {
+              console.log("Actualizar oferta", error)
+            }
+
+        }else{
+          try {
+            const primeraPuja = producto.precio_base + (producto.precio_base * 0.10);
+            await setDoc(doc(database, 'oferta', nuevoId.toString()), {
+                precio_oferta_actual:primeraPuja,
+                id_producto_fk:parseInt(producto.id),
+                id_usuario:1, //modificar dinamico
+                });
+          } catch (error) {
+            console.log("Error en una nueva oferta", error);
+          }
+        }
+    }
+
+    const precioMayorPujas = async (idProducto) => {
+        let res = null;
+        try { 
+            const q = query(
+                collection(database, "oferta"),
+                where("id_producto_fk", "==", idProducto),
+                orderBy("precio_oferta_actual", "desc"),
+                limit(1)
+            );
+            const ofertas = await getDocs(q);
+
+            if (!ofertas.empty) {
+                const docData = ofertas.docs[0].data();
+                res = docData.precio_oferta_actual;
+                console.log("Por que :" + res);
+            }
+            return res;
+            
+        } catch (error) {
+            console.log("Error en precio mayor pujas: " + error);
+        }
+    }
+
+
 
 
 
