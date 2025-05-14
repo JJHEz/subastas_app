@@ -12,7 +12,9 @@ export default function ProductoEnSubasta() {
   const intervaloRef = useRef(null);
 
   const [mejorPuja, setMejorPuja] = useState(null);
+  const [ganadorActual, setGanadorActual] = useState(null);
 
+  const porcentajeIncrementoPujas = 0.10;
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -97,12 +99,31 @@ useEffect(() => {
     // Puedes actualizar el estado para mostrar la última puja
     if (nuevasPujas.length > 0) {
       const ultimaPuja = nuevasPujas[nuevasPujas.length - 1];
-      setMejorPuja(ultimaPuja);
-      console.log("Mejor puja:", ultimaPuja); // ✅ Aquí sí refleja lo nuevo
+
+      setMejorPuja({
+        id_producto_fk: ultimaPuja.id_producto_fk,
+        id_usuario: ultimaPuja.id_usuario,
+        precio_oferta_actual: (ultimaPuja.precio_oferta_actual + (producto.precio_base * porcentajeIncrementoPujas))
+      });
+
+      setGanadorActual({
+        nombre: "Juan", // ingresar dinamicamente el nombre del usuario canador de la puja
+        id_usuario: ultimaPuja.id_usuario,
+        precio_oferta_actual: ultimaPuja.precio_oferta_actual,
+        id_producto_fk: ultimaPuja.id_producto_fk
+      });
+      console.log("Mejor puja:", ultimaPuja);
+    
+    }else{
+      setMejorPuja({precio_oferta_actual: (producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas))});
+      setGanadorActual({
+        nombre: "Sin ofertas",
+        precio_oferta_actual: (producto.precio_base)
+      });
+
     }
   });
-  //{mejorPuja.precio_oferta_actual}
-  return () => unsubscribe(); // 🔥 Importante: elimina el listener al desmontar el componente
+  return () => unsubscribe(); 
 }, [producto]);
 
 
@@ -112,22 +133,21 @@ const pujar = async () => {
   const nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1;
 
   let id = parseInt(producto.id);
-  console.log("iddd.-" + id);
+
   const pujasRef = collection(database, 'oferta');
   const q = query(pujasRef, where('id_producto_fk', '==', id));
   const ofertaExistentes = await getDocs(q);
-  console.log("Documentos encontrados:", ofertaExistentes.docs.length);
+
   if (!ofertaExistentes.empty) {
     try {
-      console.log("if");
       const primeraPuja = ofertaExistentes.docs[0].data();
       const precio = primeraPuja.precio_oferta_actual;
-      const incrementoDePuja = precio + (producto.precio_base * 0.10);
+      const incrementoDePuja = precio + (producto.precio_base * porcentajeIncrementoPujas);
 
       const refOferta = doc(database, 'oferta', ofertaExistentes.docs[0].id);
       await updateDoc(refOferta, {
         precio_oferta_actual: incrementoDePuja,
-        id_usuario: 1
+        id_usuario: 1  // remplazar dinamicamente con el id del usuario que oferta
       });
 
     } catch (error) {
@@ -136,14 +156,11 @@ const pujar = async () => {
 
   } else {
     try {
-      console.log("precio base" + producto.precio_base);
-      const primeraPuja = producto.precio_base + (producto.precio_base * 0.10);
-      console.log("else......");
-      console.log("primerpuj" + primeraPuja);
+      const primeraPuja = producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas);
       await setDoc(doc(database, 'oferta', nuevoId.toString()), {
         precio_oferta_actual: primeraPuja,
         id_producto_fk: parseInt(producto.id),
-        id_usuario: 1
+        id_usuario: 1 // reemplazar dinamicamente con el id del usuario que oferta al hacer la primera oferta
       });
     } catch (error) {
       console.log("Error en una nueva oferta", error);
@@ -213,7 +230,7 @@ const pujar = async () => {
             <Text style={styles.productText}>⏱ Tiempo: {formatTiempo(tiempoRestante)}</Text>
 
             <View style={styles.bidContainer}>
-              <Text style={styles.ganando}>Ganando{"\n"}Alan{"\n"}bs 190</Text>
+              <Text style={styles.ganando}>Ganando{"\n"}{ganadorActual ? ganadorActual.nombre : "Cargando"}{"\n"}bs {ganadorActual ? ganadorActual.precio_oferta_actual : producto.precio_base}</Text>
               <Text style={styles.subtitulo}>23 participantes</Text>
               <Text style={styles.estado}>¡Vas Ganando!</Text>
               <View style={styles.precioOferta}>
