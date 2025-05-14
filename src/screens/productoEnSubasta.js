@@ -164,7 +164,7 @@ const pujar = async () => {
       const refOferta = doc(database, 'oferta', ofertaExistentes.docs[0].id);
       await updateDoc(refOferta, {
         precio_oferta_actual: incrementoDePuja,
-        id_usuario: 1  // remplazar dinamicamente con el id del usuario que oferta
+        id_usuario: idUsuario
       });
 
     } catch (error) {
@@ -177,7 +177,7 @@ const pujar = async () => {
       await setDoc(doc(database, 'oferta', nuevoId.toString()), {
         precio_oferta_actual: primeraPuja,
         id_producto_fk: parseInt(producto.id),
-        id_usuario: idUsuario // reemplazar dinamicamente con el id del usuario que oferta al hacer la primera oferta
+        id_usuario: idUsuario
       });
     } catch (error) {
       console.log("Error en una nueva oferta", error);
