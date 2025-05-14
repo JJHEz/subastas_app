@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc } from 'firebase/firestore';
+import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc, getDoc } from 'firebase/firestore';
 import database from '../config/firebase';
 
 export default function ProductoEnSubasta() {
@@ -13,8 +13,25 @@ export default function ProductoEnSubasta() {
 
   const [mejorPuja, setMejorPuja] = useState(null);
   const [ganadorActual, setGanadorActual] = useState(null);
+  const [usuario, setUsuario] = useState(null);
 
   const porcentajeIncrementoPujas = 0.10;
+  const idUsuario = 2;
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const docRef = doc(database, 'usuario', idUsuario.toString());
+        const docSnap = await getDoc(docRef);
+        const usuario = docSnap.data();
+        setUsuario(usuario)
+        console.log('Usuario encontrado:', usuario);
+      } catch (error) {
+        console.log("Error al obtener el usuario:" + error);
+      }
+    }
+    getUser();
+  }, []);
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -107,7 +124,7 @@ useEffect(() => {
       });
 
       setGanadorActual({
-        nombre: "Juan", // ingresar dinamicamente el nombre del usuario canador de la puja
+        nombre: usuario.nombre, // ingresar dinamicamente el nombre del usuario canador de la puja
         id_usuario: ultimaPuja.id_usuario,
         precio_oferta_actual: ultimaPuja.precio_oferta_actual,
         id_producto_fk: ultimaPuja.id_producto_fk
@@ -160,7 +177,7 @@ const pujar = async () => {
       await setDoc(doc(database, 'oferta', nuevoId.toString()), {
         precio_oferta_actual: primeraPuja,
         id_producto_fk: parseInt(producto.id),
-        id_usuario: 1 // reemplazar dinamicamente con el id del usuario que oferta al hacer la primera oferta
+        id_usuario: idUsuario // reemplazar dinamicamente con el id del usuario que oferta al hacer la primera oferta
       });
     } catch (error) {
       console.log("Error en una nueva oferta", error);
