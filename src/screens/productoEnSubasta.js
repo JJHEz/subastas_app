@@ -208,13 +208,6 @@ const pujar = async () => {
         }
     }
 
-
-
-
-
-
-
- 
   const formatTiempo = (segundos) => {
     const min = Math.floor(segundos / 60);
     const seg = segundos % 60;
@@ -259,9 +252,31 @@ const pujar = async () => {
             </View>
           </View>
         ) : mostrarFinalizado && (
-          <Text style={{ fontSize: 20, marginTop: 30, fontWeight: 'bold', color: 'white' }}>
-            🎉🎉 Subasta finalizada 🎉🎉
-          </Text>
+
+            <View>
+    <View style={styles.martilleroCard}>
+      <Text style={styles.infoText}><Text style={styles.label}>Sala:</Text> Sala 1</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Producto:</Text> Televisor Samsung</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Fecha:</Text> 10/05/2025</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Vendida:</Text> Sí</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Usuario ganador:</Text> Juan Pérez</Text>
+    </View>
+
+    <View style={styles.martilleroCard}>
+      <Text style={styles.infoText}><Text style={styles.label}>Sala:</Text> Sala 2</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Producto:</Text> Laptop HP</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Fecha:</Text> 12/05/2025</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Vendida:</Text> No</Text>
+    </View>
+
+    <View style={styles.martilleroCard}>
+      <Text style={styles.infoText}><Text style={styles.label}>Sala:</Text> Sala 3</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Producto:</Text> Smartphone Xiaomi</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Fecha:</Text> 14/05/2025</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Vendida:</Text> Sí</Text>
+      <Text style={styles.infoText}><Text style={styles.label}>Usuario ganador:</Text> María López</Text>
+    </View>
+  </View>
         )}
       </View>
     </ScrollView>
@@ -363,6 +378,26 @@ const styles = StyleSheet.create({
   textoBoton: {
     fontSize: 16,
     color: 'white',
+    fontWeight: 'bold',
+  },
+    tarjeta: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 20,
+    width: '95%',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  texto: {
+    fontSize: 16,
+    color: '#000',
+    marginBottom: 4,
+  },
+  label: {
     fontWeight: 'bold',
   },
 });
