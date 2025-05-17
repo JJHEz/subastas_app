@@ -2,6 +2,8 @@ import React from 'react';
 import { NavigationContainer } from "@react-navigation/native";
 import subirProducto from "../screens/subirProducto";
 import ProductoEnSubasta from "../screens/productoEnSubasta";
+import { FAB } from 'react-native-paper'; 
+import { StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Home from "../screens/home";
@@ -68,11 +70,28 @@ function MyStack() {
   );
 }
 
-// Exportar la navegación
+
+
 export default function Navigation() {
   return (
     <NavigationContainer linking={linking}>
       <MyStack />
+      <FAB
+        style={styles.fab}
+        icon="plus"
+        onPress={() => console.log('FAB presionado!')}
+      />
     </NavigationContainer>
   );
 }
+
+// Estilos para el FAB
+const styles = StyleSheet.create({
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 80,
+    backgroundColor: '#BB6161',
+  },
+});
