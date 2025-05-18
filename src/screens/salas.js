@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../config/firebase";
+import database from "../config/firebase";
 
 const Salas = ({ navigation }) => {
   const userId = 1;  // Aquí defines el ID del usuario de manera constante, puedes modificar este valor.
@@ -12,7 +12,7 @@ const Salas = ({ navigation }) => {
   // Función para obtener las categorías
   const fetchCategorias = async () => {
     try {
-      const snapshot = await getDocs(collection(db, "categoria"));
+      const snapshot = await getDocs(collection(database, "categoria"));
       const categoriasData = {};
       snapshot.forEach((doc) => {
         const data = doc.data();
@@ -29,7 +29,7 @@ const Salas = ({ navigation }) => {
     try {
       // Aquí filtramos las salas donde el array 'participantes' contiene el id del usuario (userId).
       const salasQuery = query(
-        collection(db, "martillero"), 
+        collection(database, "martillero"), 
         where("participantes", "array-contains", userId)  // Filtrar por el id del usuario (ya es un número)
       );
       

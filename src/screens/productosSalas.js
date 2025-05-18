@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../config/firebase";
+import database from "../config/firebase";
 
 const ProductosSalas = ({ route }) => {
   const { salaId } = route.params;  // Capturamos el ID de la sala desde los parámetros de la navegación
@@ -14,7 +14,7 @@ const ProductosSalas = ({ route }) => {
       try {
         // Consulta para obtener productos filtrados por id_martillero_fk (ID de la sala)
         const productosQuery = query(
-            collection(db, "producto"), 
+            collection(database, "producto"), 
             where("id_martillero_fk", "==", salaIdNumerico)
         );
         const querySnapshot = await getDocs(productosQuery);

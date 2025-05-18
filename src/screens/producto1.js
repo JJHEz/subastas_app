@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { db } from "../config/firebase";
+import database from "../config/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
 const Producto1 = ({ route, navigation }) => {
@@ -11,7 +11,7 @@ const Producto1 = ({ route, navigation }) => {
   useEffect(() => {
     const fetchProducto = async () => {
       try {
-        const docRef = doc(db, "producto", id);  // Obtiene el producto por ID
+        const docRef = doc(database, "producto", id);  // Obtiene el producto por ID
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {

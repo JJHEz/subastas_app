@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../config/firebase";
+import database from "../config/firebase";
 
 
 //home donde se muestran todos los productos
@@ -31,7 +31,7 @@ const Home = ({ navigation, route }) => {
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "categoria"));
+        const snapshot = await getDocs(collection(database, "categoria"));
         const map = {};
         const listaDropDown = [];
 
@@ -56,7 +56,7 @@ const Home = ({ navigation, route }) => {
 
     const fetchData = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "producto"));
+        const querySnapshot = await getDocs(collection(database, "producto"));
         const items = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
