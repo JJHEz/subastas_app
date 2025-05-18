@@ -124,7 +124,7 @@ export default function AddProductForm() {
 
 
       await setDoc(doc(database, "producto",nuevoId.toString()), {
-        estado_del_produto:estado,
+        estado_del_producto:estado,
         fecha_de_subasta: "01-05-2025",
         hora_de_subasta: "13:00",
         hora_fin_subasta: "13:20",
