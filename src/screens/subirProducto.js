@@ -153,6 +153,7 @@ export default function AddProductForm() {
       await aumentarNumeroDeProductosEnSala(idSala,cantidadProductos);
       // Aquí puedes limpiar el formulario si quieres
     } catch (error) {
+      setCargando(false);
       console.error("Error al guardar:", error);
       alert("Hubo un error al guardar el producto");
     }
@@ -192,9 +193,9 @@ export default function AddProductForm() {
 
 
   useEffect(() => {
-    let nombreDesdeDB = getNombreDeUsuario(); // Por el momento funciona sin el await
-    //reemplazar nombre de db aqui
-    setUser({ nombre: nombreDesdeDB });
+    let nombreDesdedatabase = getNombreDeUsuario(); // Por el momento funciona sin el await
+    //reemplazar nombre de database aqui
+    setUser({ nombre: nombreDesdedatabase });
 
   }, []);
 
