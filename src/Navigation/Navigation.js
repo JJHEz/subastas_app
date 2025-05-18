@@ -43,6 +43,8 @@ function TabNavigator() {
     >
       <Tab.Screen name="Home" component={Home} options={{ title: "Productos" }} />
       <Tab.Screen name="Salas" component={Salas} options={{ title: "Salas" }} />
+      <Tab.Screen name="subirProducto" component={subirProducto} options={{ headerShown: false }}/>   
+      <Tab.Screen name="ProductoEnSubasta" component={ProductoEnSubasta} options={{ title: "Subasta en linea" }}/>
     </Tab.Navigator>
   );
 }
