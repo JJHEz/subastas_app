@@ -12,7 +12,9 @@ import Garantia from "../screens/garantia";
 import Producto1 from "../screens/producto1";
 import Salas from "../screens/salas";
 import ProductosSalas from "../screens/productosSalas";
-
+import WelcomeScreen from '../screens/WelcomeScreen';
+import LoginScreen from '../screens/LoginScreen';
+import SignUpScreen from '../screens/SignUpScreen';
 // Crear el stack y el tab navigator
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -52,13 +54,17 @@ function TabNavigator() {
 // Función que maneja las rutas de Stack
 function MyStack() {
   return (
-    <Stack.Navigator initialRouteName="TabNavigator">
+    <Stack.Navigator initialRouteName="Welcome">
       {/* Aquí agregas el Tab Navigator como una de las pantallas dentro del Stack */}
       <Stack.Screen 
         name="TabNavigator" 
         component={TabNavigator} 
         options={{ headerShown: false }}  // Ocultamos el header porque la barra de navegación inferior ya lo maneja
       />
+
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="SignUp" component={SignUpScreen} />
       
       {/* Definir las pantallas adicionales dentro del Stack */}
       <Stack.Screen name="Producto" component={Producto} options={{ title: "Detalle del Producto" }} />
