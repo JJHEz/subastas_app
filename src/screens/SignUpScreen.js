@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import database from "../config/firebase"
-import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, query, where } from 'firebase/firestore';
 
 export default function SignUpScreen({ navigation }) {
   const [agree, setAgree] = useState(false);
@@ -32,10 +32,21 @@ export default function SignUpScreen({ navigation }) {
 
     try {
       setCargando(true);
+
+      const usuariosRef = collection(database, 'usuario');
+      const q = query(usuariosRef, where('correo_electronico', '==', email));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        setCargando(false);
+        alert('Este correo ya está registrado en otra cuenta, ingresa otro por favor.');
+        return;
+      }
+
+      
       let productoSnapshot = await getDocs(collection(database, 'usuario')); 
       let idsNumericos = productoSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id));
       let nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1; 
-
 
       await setDoc(doc(database, "usuario",nuevoId.toString()), {
         nombre:name,
@@ -50,6 +61,7 @@ export default function SignUpScreen({ navigation }) {
       setEmail('');
       setErrors({});
     } catch (error) {
+      setCargando(false);
       console.log("Error of the create account:" + error);
     }
   }
