@@ -1,8 +1,58 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import database from "../config/firebase"
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 
 export default function SignUpScreen({ navigation }) {
-  const [agree, setAgree] = React.useState(false);
+  const [agree, setAgree] = useState(false);
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [errors, setErrors] = useState({});
+  const [cargando, setCargando] = useState(false);
+
+
+  const validarCampos = () => {
+      const nuevosErrores = {};
+      if (!name) nuevosErrores.name = true;
+      if (!password) nuevosErrores.password = true;
+      if (!email) nuevosErrores.email = true;
+      setErrors(nuevosErrores);
+      return Object.keys(nuevosErrores).length === 0;
+    };
+
+  const createAccount = async () => {
+    if (!validarCampos()) {
+      alert('Por favor completa todos los campos');
+      return;
+    }
+    console.log(name);
+    console.log(password);
+    console.log(email);
+
+    try {
+      setCargando(true);
+      let productoSnapshot = await getDocs(collection(database, 'usuario')); 
+      let idsNumericos = productoSnapshot.docs.map(doc => parseInt(doc.id)).filter(id => !isNaN(id));
+      let nuevoId = idsNumericos.length > 0 ? Math.max(...idsNumericos) + 1 : 1; 
+
+
+      await setDoc(doc(database, "usuario",nuevoId.toString()), {
+        nombre:name,
+        contraseña: password,
+        correo_electronico: email,
+              
+      });
+      setCargando(false);
+      alert("Cuenta creada correctamente");
+      setName('');
+      setPassword('');
+      setEmail('');
+      setErrors({});
+    } catch (error) {
+      console.log("Error of the create account:" + error);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -18,31 +68,100 @@ export default function SignUpScreen({ navigation }) {
           </TouchableOpacity>
         </View>
         <Text style={styles.welcomeText}>Welcome to YoloKiero</Text>
-        <TextInput placeholder="Nombre de Usuario" style={styles.input} />
-        <TextInput placeholder="Password" secureTextEntry style={styles.input} />
-        <TextInput placeholder="E - Mail" style={styles.input} />
+        <TextInput placeholder="Nombre de Usuario" style={styles.input} value={name} onChangeText={setName}/>
+        <TextInput placeholder="Password" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
+        <TextInput placeholder="E - Mail" style={styles.input} value={email} onChangeText={setEmail}/>
         
-        <TouchableOpacity style={styles.signupButton}>
+        <TouchableOpacity style={styles.signupButton} onPress={createAccount}>
           <Text style={styles.signupButtonText}>Sign Up</Text>
         </TouchableOpacity>
+
+        {cargando && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+        )}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0096FF', alignItems: 'center' },
-  background: { width: '100%', height: 200 },
-  logo: { width: 100, height: 100, resizeMode: 'contain', marginTop: -50 },
-  form: { backgroundColor: 'white', padding: 20, width: '90%', borderRadius: 20, marginTop: 10 },
-  tabContainer: { flexDirection: 'row', justifyContent: 'space-between' },
-  tabInactive: { paddingBottom: 5 },
-  tabActive: { borderBottomWidth: 2, borderColor: '#D4AF7A', paddingBottom: 5 },
-  tabText: { fontWeight: 'bold' },
-  welcomeText: { fontSize: 18, fontWeight: 'bold', marginVertical: 15 },
-  input: { borderBottomWidth: 1, borderColor: '#ccc', marginBottom: 15, paddingVertical: 5 },
-  checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  checkboxText: { marginLeft: 10 },
-  signupButton: { backgroundColor: '#D4AF7A', padding: 12, borderRadius: 20, alignItems: 'center' },
-  signupButtonText: { color: 'white', fontWeight: 'bold' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#0096FF', 
+    alignItems: 'center' 
+  },
+  background: { 
+    width: '100%', 
+    height: 200 
+  },
+  logo: { 
+    width: 100, 
+    height: 100, 
+    resizeMode: 'contain', 
+    marginTop: -50 
+  },
+  form: { 
+    backgroundColor: 'white', 
+    padding: 20, 
+    width: '90%', 
+    borderRadius: 20, 
+    marginTop: 10 
+  },
+  tabContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between' 
+  },
+  tabInactive: { 
+    paddingBottom: 5 
+  },
+  tabActive: { 
+    borderBottomWidth: 2, 
+    borderColor: '#D4AF7A', 
+    paddingBottom: 5 
+  },
+  tabText: { 
+    fontWeight: 'bold' 
+  },
+  welcomeText: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginVertical: 15 
+  },
+  input: { 
+    borderBottomWidth: 1, 
+    borderColor: '#ccc', 
+    marginBottom: 15, 
+    paddingVertical: 5 
+  },
+  checkboxContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 10 
+  },
+  checkboxText: { 
+    marginLeft: 10 
+  },
+  signupButton: { 
+    backgroundColor: '#D4AF7A', 
+    padding: 12, 
+    borderRadius: 20, 
+    alignItems: 'center' 
+  },
+  signupButtonText: { 
+    color: 'white', 
+    fontWeight: 'bold' 
+  },
+  loadingOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 9999, // Asegura que esté encima
+      backgroundColor: 'rgba(0,0,0,0.4)', // Fondo oscuro semi-transparente
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
 });
