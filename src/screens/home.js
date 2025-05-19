@@ -3,11 +3,16 @@ import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } 
 import DropDownPicker from 'react-native-dropdown-picker';
 import { collection, getDocs } from "firebase/firestore";
 import database from "../config/firebase";
-
+import { useRoute } from '@react-navigation/native';
 
 //home donde se muestran todos los productos
 
-const Home = ({ navigation, route }) => {
+const Home = ({ navigation }) => {
+  const route = useRoute();
+  const { idUsuario } = route.params;
+  const idDelUsuarioQueIngreso = idUsuario;  //--------> Pueden usar este id para hacer todas sus consultas en la base de datos
+  console.log("Ingreso el usuario con id: " + idDelUsuarioQueIngreso);
+
   const { id: usuarioId } = route.params || {}; // captura el id del usuario desde la URL
   const [userId, setUserId] = useState(usuarioId || null); // guarda el id para uso libre
 

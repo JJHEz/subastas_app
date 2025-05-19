@@ -31,10 +31,12 @@ export default function LoginScreen({ navigation }) {
       if (!querySnapshot.empty) {
         setCargando(false);
         console.log("Existe la cuenta a loguearse");
-        return;
+        let idUsuario = querySnapshot.docs[0].id;
+        navigation.navigate('TabNavigator', {idUsuario});
       } else {
         setCargando(false);
         console.log("Password o correo incorrectos");
+        alert("Cuenta incorrecta, intenta nuevamente.");
       }
       
     } catch (error) {

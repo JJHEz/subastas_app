@@ -34,7 +34,8 @@ const linking = {
 };
 
 // Pantalla para el Tab Navigator
-function TabNavigator() {
+function TabNavigator( { route } ) {
+  const { idUsuario } = route.params || {};
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -43,7 +44,7 @@ function TabNavigator() {
         tabBarInactiveTintColor: 'gray',
       }}
     >
-      <Tab.Screen name="Home" component={Home} options={{ title: "Productos" }} />
+      <Tab.Screen name="Home" component={Home} options={{ title: "Productos" }} initialParams={{ idUsuario }} />
       <Tab.Screen name="Salas" component={Salas} options={{ title: "Salas" }} />
       <Tab.Screen name="subirProducto" component={subirProducto} options={{ headerShown: false }}/>   
       <Tab.Screen name="ProductoEnSubasta" component={ProductoEnSubasta} options={{ title: "Subasta en linea" }}/>
@@ -62,9 +63,9 @@ function MyStack() {
         options={{ headerShown: false }}  // Ocultamos el header porque la barra de navegación inferior ya lo maneja
       />
 
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="SignUp" component={SignUpScreen} />
+      <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }}/>
       
       {/* Definir las pantallas adicionales dentro del Stack */}
       <Stack.Screen name="Producto" component={Producto} options={{ title: "Detalle del Producto" }} />
