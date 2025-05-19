@@ -80,9 +80,19 @@ export default function SignUpScreen({ navigation }) {
           </TouchableOpacity>
         </View>
         <Text style={styles.welcomeText}>Welcome to YoloKiero</Text>
-        <TextInput placeholder="Nombre de Usuario" style={styles.input} value={name} onChangeText={setName}/>
-        <TextInput placeholder="Password" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
-        <TextInput placeholder="E - Mail" style={styles.input} value={email} onChangeText={setEmail}/>
+        <View>
+          {errors.name && <Text style={styles.asterisk}> *</Text>}
+          <TextInput placeholder="Nombre de Usuario" style={styles.input} value={name} onChangeText={setName}/>
+        </View>
+        <View>
+          {errors.password && <Text style={styles.asterisk}> *</Text>}
+          <TextInput placeholder="Password" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
+        </View>
+        <View>
+          {errors.email && <Text style={styles.asterisk}> *</Text>}
+          <TextInput placeholder="E - Mail" style={styles.input} value={email} onChangeText={setEmail}/>
+        </View>
+        
         
         <TouchableOpacity style={styles.signupButton} onPress={createAccount}>
           <Text style={styles.signupButtonText}>Sign Up</Text>
@@ -175,5 +185,14 @@ const styles = StyleSheet.create({
       backgroundColor: 'rgba(0,0,0,0.4)', // Fondo oscuro semi-transparente
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    asterisk: {
+      position: 'absolute',
+      left: -15, // cámbialo a -20, -30, etc. para moverlo más a la derecha
+      top: '50%',
+      transform: [{ translateY: -10 }],
+      color: 'red',
+      fontWeight: 'bold',
+      fontSize: 16,
     },
 });
