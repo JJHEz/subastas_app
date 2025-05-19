@@ -4,7 +4,6 @@ import database from "../config/firebase"
 import { collection, getDocs, doc, setDoc, query, where } from 'firebase/firestore';
 
 export default function SignUpScreen({ navigation }) {
-  const [agree, setAgree] = useState(false);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
