@@ -30,7 +30,6 @@ export default function LoginScreen({ navigation }) {
       
       if (!querySnapshot.empty) {
         setCargando(false);
-        console.log("Existe la cuenta a loguearse");
         let idUsuario = querySnapshot.docs[0].id;
         navigation.navigate('TabNavigator', {idUsuario});
       } else {
@@ -52,23 +51,23 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.form}>
         <View style={styles.tabContainer}>
           <TouchableOpacity style={styles.tabActive}>
-            <Text style={styles.tabText}>Log in</Text>
+            <Text style={styles.tabText}>Inicio de sesión</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.tabInactive} onPress={() => navigation.navigate('SignUp')}>
-            <Text style={styles.tabText}>Sign Up</Text>
+            <Text style={styles.tabText}>Registrarse</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.welcomeText}>Welcome to YoloKiero</Text>
+        <Text style={styles.welcomeText}>Bienvenido a YoloKiero</Text>
         <View>
           {errors.email && <Text style={styles.asterisk}> *</Text>}
           <TextInput placeholder="E - Mail" style={styles.input} value={email} onChangeText={setEmail}/>
         </View>
         <View>
           {errors.password && <Text style={styles.asterisk}> *</Text>}
-          <TextInput placeholder="Password" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
+          <TextInput placeholder="Contraseña" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
         </View>
         <TouchableOpacity style={styles.loginButton} onPress={authenticationWithAccount}>
-          <Text style={styles.loginButtonText}>Log in</Text>
+          <Text style={styles.loginButtonText}>Iniciar sesión</Text>
         </TouchableOpacity>
         {cargando && (
           <View style={styles.loadingOverlay}>

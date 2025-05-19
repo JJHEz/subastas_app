@@ -72,20 +72,20 @@ export default function SignUpScreen({ navigation }) {
       <View style={styles.form}>
         <View style={styles.tabContainer}>
           <TouchableOpacity style={styles.tabInactive} onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.tabText}>Log in</Text>
+            <Text style={styles.tabText}>Inicio de sesión</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.tabActive}>
-            <Text style={styles.tabText}>Sign Up</Text>
+            <Text style={styles.tabText}>Registrarse</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.welcomeText}>Welcome to YoloKiero</Text>
+        <Text style={styles.welcomeText}>Bienvenido a YoloKiero</Text>
         <View>
           {errors.name && <Text style={styles.asterisk}> *</Text>}
           <TextInput placeholder="Nombre de Usuario" style={styles.input} value={name} onChangeText={setName}/>
         </View>
         <View>
           {errors.password && <Text style={styles.asterisk}> *</Text>}
-          <TextInput placeholder="Password" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
+          <TextInput placeholder="Contraseña" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
         </View>
         <View>
           {errors.email && <Text style={styles.asterisk}> *</Text>}
@@ -94,7 +94,7 @@ export default function SignUpScreen({ navigation }) {
         
         
         <TouchableOpacity style={styles.signupButton} onPress={createAccount}>
-          <Text style={styles.signupButtonText}>Sign Up</Text>
+          <Text style={styles.signupButtonText}>Crear cuenta</Text>
         </TouchableOpacity>
 
         {cargando && (

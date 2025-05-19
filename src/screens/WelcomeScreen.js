@@ -7,12 +7,12 @@ export default function WelcomeScreen({ navigation }) {
       <Image source={require('../../assets/images/background.jpg')} style={styles.background} />
       <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.buttonText}>Log in</Text>
+        <Text style={styles.buttonText}>Iniciar</Text>
       </TouchableOpacity>
       <Text style={styles.footerText}>
-        Don't have an account?{' '}
+        ¿No tienes una cuenta?{' '}
         <Text style={styles.signUp} onPress={() => navigation.navigate('SignUp')}>
-          Sign Up
+          Crear cuenta
         </Text>
       </Text>
     </View>
