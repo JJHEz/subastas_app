@@ -7,11 +7,12 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { IconButton, Button } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import DropDownPicker from 'react-native-dropdown-picker';
-
+import { useRoute, useNavigation } from '@react-navigation/native';
 
 import database from "../config/firebase"
 import { collection, getDocs, getDoc, doc, setDoc, query, limit, where, orderBy, updateDoc, docSnap } from 'firebase/firestore';
@@ -36,6 +37,10 @@ export default function AddProductForm() {
   const [user, setUser] = useState({ nombre: ''});
 
   const [cargando, setCargando] = useState(false);
+
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { idDelUsuarioQueIngreso } = route.params;
 
 
 
@@ -130,7 +135,7 @@ export default function AddProductForm() {
         hora_fin_subasta: "13:20",
         id_categoria_fk:category,
         id_martillero_fk: parseInt(idSala),
-        id_usuario_fk: 2, //Necesitamos el id del usuario, nos pasaran dinamicamente
+        id_usuario_fk: parseInt(idDelUsuarioQueIngreso),
         imagen: downloadURL,
         nombre_producto: title,
         descripcion_producto: descripcion,
@@ -138,7 +143,7 @@ export default function AddProductForm() {
         ubicacion: ubicacion,
         vendido:false,
       });
-      alert("Producto guardado con éxito");
+      //alert("Producto guardado con éxito");
       setTitle('');
       setDescripcion('');
       setCategory('');
@@ -151,7 +156,18 @@ export default function AddProductForm() {
 
       setCargando(false);
       await aumentarNumeroDeProductosEnSala(idSala,cantidadProductos);
-      // Aquí puedes limpiar el formulario si quieres
+      
+      Alert.alert(
+        "Producto guardado con éxito",
+        "Tu producto fue asignado a una sala para su respectiva subasta.",
+        [
+          {
+            text: "OK",
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+
     } catch (error) {
       setCargando(false);
       console.error("Error al guardar:", error);
@@ -194,13 +210,12 @@ export default function AddProductForm() {
 
   useEffect(() => {
     let nombreDesdedatabase = getNombreDeUsuario(); // Por el momento funciona sin el await
-    //reemplazar nombre de database aqui
     setUser({ nombre: nombreDesdedatabase });
 
   }, []);
 
   const getNombreDeUsuario = async () => {
-    let idUsuario = "1"; // <-- aquí pones el ID específico del usuario
+    let idUsuario = idDelUsuarioQueIngreso; // <-- aquí pones el ID específico del usuario
     const docRef = doc(database, 'usuario', idUsuario);
     const docSnap = await getDoc(docRef);
     const datosObtenidos = docSnap.data();
@@ -209,7 +224,7 @@ export default function AddProductForm() {
 
   return (
     <View style={styles.container}>
-      <IconButton icon="arrow-left" style={styles.botonRegresar} onPress={() => {}} />
+      <IconButton icon="arrow-left" style={styles.botonRegresar} onPress={() => navigation.goBack()} />
       
       <View style={styles.card}>
         <View style={styles.userRow}>

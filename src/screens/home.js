@@ -169,7 +169,7 @@ const Home = ({ navigation }) => {
   <FAB
     style={styles.fab}
     icon="plus"
-    onPress={() => navigation.navigate("subirProducto", { idUsuario })}
+    onPress={() => navigation.navigate("subirProducto", { idDelUsuarioQueIngreso })}
   />
 </View>
 );
