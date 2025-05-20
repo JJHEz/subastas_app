@@ -83,20 +83,9 @@ function MyStack() {
 
 export default function Navigation() {
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer>
       <MyStack />
 
     </NavigationContainer>
   );
 }
-
-// Estilos para el FAB
-const styles = StyleSheet.create({
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 80,
-    backgroundColor: '#BB6161',
-  },
-});
