@@ -26,10 +26,6 @@ const Producto = ({ route, navigation }) => {
         <TouchableOpacity style={styles.botonInscribirse} onPress={() => /*alert('Inscrito')*/ navigation.navigate('Garantia')}>
           <Text style={styles.textoBoton}>Inscribirse a subasta</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.botonParticipar} onPress={() => navigation.goBack()}>
-          <Text style={styles.textoBoton}>Participar</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );

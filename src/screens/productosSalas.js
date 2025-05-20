@@ -34,17 +34,18 @@ const ProductosSalas = ({ route }) => {
   }, [salaId]);
 
   const renderProductoItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.burbuja}  // Estilo similar al de los productos en Home.js
-      onPress={() => console.log(`Producto: ${item.nombre_producto}`)}  // Aquí podrías navegar a la pantalla de detalle del producto
-    >
-      <Image source={{ uri: item.imagen }} style={styles.imagen} />
-      <View style={styles.detalles}>
-        <Text style={styles.nombre}>{item.nombre_producto}</Text>
-        <Text>{item.descripcion_producto}</Text>
-        <Text>Precio base: ${item.precio_base}</Text>
-      </View>
-    </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.burbuja}  // Estilo similar al de los productos en Home.js
+        onPress={() => console.log(`Producto: ${item.nombre_producto}`)}  // Aquí podrías navegar a la pantalla de detalle del producto
+      >
+        <Image source={{ uri: item.imagen }} style={styles.imagen} />
+        <View style={styles.detalles}>
+          <Text style={styles.nombre}>{item.nombre_producto}</Text>
+          <Text>{item.descripcion_producto}</Text>
+          <Text>Precio base: ${item.precio_base}</Text>
+        </View>
+      </TouchableOpacity>
   );
 
   return (
@@ -59,6 +60,14 @@ const ProductosSalas = ({ route }) => {
           renderItem={renderProductoItem}
         />
       )}
+        <View>
+          <TouchableOpacity
+            style={styles.botonParticipar}
+            onPress={() => navigation.navigate('ProductoEnSubasta')}
+          >
+            <Text style={styles.textoBoton}>Participar</Text>
+          </TouchableOpacity>
+        </View>
     </View>
   );
 };
@@ -97,6 +106,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 5,
+  },
+    botonParticipar: {
+    backgroundColor: "#28a745",
+    paddingVertical: 12,
+    color: "white",
+    textAlign: "Center",
+    paddingHorizontal: 30,
+    borderRadius: 25,
+  },
+    textoBoton: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
 
