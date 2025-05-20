@@ -85,11 +85,7 @@ export default function Navigation() {
   return (
     <NavigationContainer linking={linking}>
       <MyStack />
-      <FAB
-        style={styles.fab}
-        icon="plus"
-        onPress={() => console.log('FAB presionado!')}
-      />
+
     </NavigationContainer>
   );
 }

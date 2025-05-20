@@ -4,6 +4,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { collection, getDocs } from "firebase/firestore";
 import database from "../config/firebase";
 import { useRoute } from '@react-navigation/native';
+import { FAB } from 'react-native-paper';
 
 //home donde se muestran todos los productos
 
@@ -165,6 +166,11 @@ const Home = ({ navigation }) => {
       </>
     )
   }
+  <FAB
+    style={styles.fab}
+    icon="plus"
+    onPress={() => navigation.navigate("subirProducto", { idUsuario })}
+  />
 </View>
 );
 };
@@ -226,6 +232,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 5,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 20,
+    backgroundColor: '#BB6161',
   },
 });
 
