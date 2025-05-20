@@ -129,7 +129,7 @@ export default function AddProductForm() {
         hora_de_subasta: "13:00",
         hora_fin_subasta: "13:20",
         id_categoria_fk:category,
-        id_martillero_fk: idSala,
+        id_martillero_fk: parseInt(idSala),
         id_usuario_fk: 2, //Necesitamos el id del usuario, nos pasaran dinamicamente
         imagen: downloadURL,
         nombre_producto: title,

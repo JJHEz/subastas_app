@@ -7,6 +7,7 @@ export default function SignUpScreen({ navigation }) {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [errors, setErrors] = useState({});
   const [cargando, setCargando] = useState(false);
 
@@ -16,6 +17,7 @@ export default function SignUpScreen({ navigation }) {
       if (!name) nuevosErrores.name = true;
       if (!password) nuevosErrores.password = true;
       if (!email) nuevosErrores.email = true;
+      if (!phone) nuevosErrores.phone = true;
       setErrors(nuevosErrores);
       return Object.keys(nuevosErrores).length === 0;
     };
@@ -25,9 +27,6 @@ export default function SignUpScreen({ navigation }) {
       alert('Por favor completa todos los campos');
       return;
     }
-    console.log(name);
-    console.log(password);
-    console.log(email);
 
     try {
       setCargando(true);
@@ -51,13 +50,14 @@ export default function SignUpScreen({ navigation }) {
         nombre:name,
         contraseña: password,
         correo_electronico: email,
-              
+        telefono: phone,
       });
       setCargando(false);
       alert("Cuenta creada correctamente");
       setName('');
       setPassword('');
       setEmail('');
+      setPhone('');
       setErrors({});
     } catch (error) {
       setCargando(false);
@@ -90,6 +90,10 @@ export default function SignUpScreen({ navigation }) {
         <View>
           {errors.email && <Text style={styles.asterisk}> *</Text>}
           <TextInput placeholder="E - Mail" style={styles.input} value={email} onChangeText={setEmail}/>
+        </View>
+        <View>
+          {errors.phone && <Text style={styles.asterisk}> *</Text>}
+          <TextInput placeholder="Teléfono" style={styles.input} keyboardType="numeric" value={phone} onChangeText={setPhone}/>
         </View>
         
         
