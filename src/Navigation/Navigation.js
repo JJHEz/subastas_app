@@ -12,6 +12,7 @@ import Garantia from "../screens/garantia";
 import Producto1 from "../screens/producto1";
 import Salas from "../screens/salas";
 import ProductosSalas from "../screens/productosSalas";
+import ProductosGanados from "../screens/productosGanados";
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import SignUpScreen from '../screens/SignUpScreen';
@@ -46,8 +47,9 @@ function TabNavigator( { route } ) {
     >
       <Tab.Screen name="Home" component={Home} options={{ title: "Productos" }} initialParams={{ idUsuario }} />
       <Tab.Screen name="Salas" component={Salas} options={{ title: "Salas" }} />
-      <Tab.Screen name="subirProducto" component={subirProducto} options={{ headerShown: false }}/>   
-      <Tab.Screen name="ProductoEnSubasta" component={ProductoEnSubasta} options={{ title: "Subasta en linea" }}/>
+      {/*<Tab.Screen name="subirProducto" component={subirProducto} options={{ headerShown: false }}/>*/}
+      {/*<Tab.Screen name="ProductoEnSubasta" component={ProductoEnSubasta} options={{ title: "Subasta en linea" }}/>*/}
+      <Tab.Screen name="ProductosGanados" component={ProductosGanados} options={{ title: "Productos Ganados" }} />
     </Tab.Navigator>
   );
 }
@@ -88,7 +90,7 @@ export default function Navigation() {
       <FAB
         style={styles.fab}
         icon="plus"
-        onPress={() => console.log('FAB presionado!')}
+        onPress={() => navigate("subirProducto")}
       />
     </NavigationContainer>
   );
@@ -99,7 +101,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     margin: 16,
-    right: 0,
+    right: 30,
     bottom: 80,
     backgroundColor: '#BB6161',
   },

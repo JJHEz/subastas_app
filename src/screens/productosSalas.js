@@ -50,6 +50,12 @@ const ProductosSalas = ({ route }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Productos de la Sala {salaId} </Text>
+      <TouchableOpacity
+        style={styles.botonInscribirse}
+        onPress={() => navigation.navigate('ProductoEnSubasta')} // Navegar a la pantalla de inscripción
+      >
+      <Text style={styles.textoBoton}>Ir a subasta</Text>
+      </TouchableOpacity> 
       {productos.length === 0 ? (
         <Text>No hay productos disponibles en esta sala.</Text>
       ) : (
@@ -74,6 +80,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#fff', // Para que el texto del encabezado sea visible sobre el fondo azul
+  },
+  botonInscribirse: {
+    backgroundColor: '#004a99',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    marginBottom: 20,
+    alignSelf: 'center', // para centrar el botón horizontalmente
+  },
+  textoBoton: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   burbuja: {
     backgroundColor: "#f0f0f0",
