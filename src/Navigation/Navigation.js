@@ -45,7 +45,7 @@ function TabNavigator( { route } ) {
       }}
     >
       <Tab.Screen name="Home" component={Home} options={{ title: "Productos" }} initialParams={{ idUsuario }} />
-      <Tab.Screen name="Salas" component={Salas} options={{ title: "Salas" }} />
+      <Tab.Screen name="Salas" component={Salas} options={{ title: "Salas" }} initialParams={{ idUsuario }} />
     </Tab.Navigator>
   );
 }
