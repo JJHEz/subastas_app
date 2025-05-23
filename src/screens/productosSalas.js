@@ -50,7 +50,7 @@ const ProductosSalas = ({ route, navigation }) => {
     <View style={styles.container}>
       <Text style={styles.header}>Productos de la Sala {salaId} </Text>
 
-      <TouchableOpacity style={styles.botonInscribirse} onPress={() => navigation.navigate("ProductoEnSubasta")}>
+      <TouchableOpacity style={styles.botonInscribirse} onPress={() => navigation.navigate("ProductoEnSubasta", {idDelUsuarioQueIngreso:idDelUsuarioQueIngreso})}>
         <Text style={styles.textoBoton}>Ir a subasta</Text>
       </TouchableOpacity>
 
