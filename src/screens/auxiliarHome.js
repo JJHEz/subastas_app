@@ -3,17 +3,11 @@ import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } 
 import DropDownPicker from 'react-native-dropdown-picker';
 import { collection, getDocs } from "firebase/firestore";
 import database from "../config/firebase";
-import { useRoute } from '@react-navigation/native';
-import { FAB } from 'react-native-paper';
+
 
 //home donde se muestran todos los productos
 
-const Home = ({ navigation }) => {
-  const route = useRoute();
-  const { idUsuario } = route.params;
-  const idDelUsuarioQueIngreso = idUsuario;  //--------> Pueden usar este id para hacer todas sus consultas en la base de datos
-  console.log("Ingreso el usuario con id: " + idDelUsuarioQueIngreso);
-
+const Home = ({ navigation, route }) => {
   const { id: usuarioId } = route.params || {}; // captura el id del usuario desde la URL
   const [userId, setUserId] = useState(usuarioId || null); // guarda el id para uso libre
 
@@ -166,11 +160,6 @@ const Home = ({ navigation }) => {
       </>
     )
   }
-  <FAB
-    style={styles.fab}
-    icon="plus"
-    onPress={() => navigation.navigate("subirProducto", { idDelUsuarioQueIngreso })}
-  />
 </View>
 );
 };
@@ -232,13 +221,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 5,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 20,
-    backgroundColor: '#BB6161',
   },
 });
 
