@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc, getDoc } from 'firebase/firestore';
 import database from '../config/firebase';
+import { useRoute } from '@react-navigation/native';
 
 export default function ProductoEnSubasta() {
   const [martillero, setMartillero] = useState(null);
@@ -14,9 +15,12 @@ export default function ProductoEnSubasta() {
   const [mejorPuja, setMejorPuja] = useState(null);
   const [ganadorActual, setGanadorActual] = useState(null);
   const [usuario, setUsuario] = useState(null);
+  const [estadoGanador, setEstadoGanador] = useState({estado:"cargando"});
 
+  const route = useRoute();
+  const { idDelUsuarioQueIngreso } = route.params;
   const porcentajeIncrementoPujas = 0.10;
-  const idUsuario = 2;
+  const idUsuario = idDelUsuarioQueIngreso;
 
   useEffect(() => {
     const getUser = async () => {
@@ -111,25 +115,45 @@ useEffect(() => {
   const pujasRef = collection(database, 'oferta');
   const q = query(pujasRef, where('id_producto_fk', '==', id));
 
-  const unsubscribe = onSnapshot(q, (snapshot) => {
+  const unsubscribe = onSnapshot(q, async (snapshot) => {
     const nuevasPujas = snapshot.docs.map(doc => doc.data());
     // Puedes actualizar el estado para mostrar la última puja
     if (nuevasPujas.length > 0) {
       const ultimaPuja = nuevasPujas[nuevasPujas.length - 1];
 
-      setMejorPuja({
-        id_producto_fk: ultimaPuja.id_producto_fk,
-        id_usuario: ultimaPuja.id_usuario,
-        precio_oferta_actual: (ultimaPuja.precio_oferta_actual + (producto.precio_base * porcentajeIncrementoPujas))
-      });
+      try {
+        const docRef = doc(database, 'usuario', ultimaPuja.id_usuario.toString());
+        const docSnap = await getDoc(docRef);
+        const usuarioData = docSnap.exists() ? docSnap.data() : { nombre: 'Desconocido' };
 
-      setGanadorActual({
-        nombre: usuario.nombre, // ingresar dinamicamente el nombre del usuario canador de la puja
-        id_usuario: ultimaPuja.id_usuario,
-        precio_oferta_actual: ultimaPuja.precio_oferta_actual,
-        id_producto_fk: ultimaPuja.id_producto_fk
-      });
-      console.log("Mejor puja:", ultimaPuja);
+        setMejorPuja({
+          id_producto_fk: ultimaPuja.id_producto_fk,
+          id_usuario: ultimaPuja.id_usuario,
+          precio_oferta_actual: (ultimaPuja.precio_oferta_actual + (producto.precio_base * porcentajeIncrementoPujas))
+        });
+
+        setGanadorActual({
+          nombre: usuarioData.nombre,
+          id_usuario: ultimaPuja.id_usuario,
+          precio_oferta_actual: ultimaPuja.precio_oferta_actual,
+          id_producto_fk: ultimaPuja.id_producto_fk
+        });
+
+        if(usuarioData.nombre === usuario.nombre){
+          setEstadoGanador({
+            estado: "¡Vas Ganando!"
+          });
+        }else{
+          setEstadoGanador({
+            estado: "¡Vas Perdiendo!"
+          });
+        }
+
+        console.log("Mejor puja:", ultimaPuja);
+        console.log("Nombre del usuario que ofertó:", usuarioData.nombre);
+      } catch (error) {
+        console.log("Error al obtener el usuario de la puja:", error);
+      }
     
     }else{
       setMejorPuja({precio_oferta_actual: (producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas))});
@@ -164,7 +188,7 @@ const pujar = async () => {
       const refOferta = doc(database, 'oferta', ofertaExistentes.docs[0].id);
       await updateDoc(refOferta, {
         precio_oferta_actual: incrementoDePuja,
-        id_usuario: idUsuario
+        id_usuario: parseInt(idUsuario)
       });
 
     } catch (error) {
@@ -177,7 +201,7 @@ const pujar = async () => {
       await setDoc(doc(database, 'oferta', nuevoId.toString()), {
         precio_oferta_actual: primeraPuja,
         id_producto_fk: parseInt(producto.id),
-        id_usuario: idUsuario
+        id_usuario: parseInt(idUsuario)
       });
     } catch (error) {
       console.log("Error en una nueva oferta", error);
@@ -249,7 +273,7 @@ const pujar = async () => {
             <View style={styles.bidContainer}>
               <Text style={styles.ganando}>Ganando{"\n"}{ganadorActual ? ganadorActual.nombre : "Cargando"}{"\n"}bs {ganadorActual ? ganadorActual.precio_oferta_actual : producto.precio_base}</Text>
               <Text style={styles.subtitulo}>23 participantes</Text>
-              <Text style={styles.estado}>¡Vas Ganando!</Text>
+              <Text style={[styles.estado, { color: estadoGanador.estado === '¡Vas Ganando!' ? 'green' : 'red' }]}>{estadoGanador.estado}</Text>
               <View style={styles.precioOferta}>
                 <Text style={styles.textoOferta}>Bs {mejorPuja ? mejorPuja.precio_oferta_actual : producto.precio_base}</Text>
               </View>
