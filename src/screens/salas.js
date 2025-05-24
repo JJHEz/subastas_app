@@ -2,8 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import database from "../config/firebase";
+import { useRoute } from '@react-navigation/native';
 
 const Salas = ({ navigation }) => {
+
+  const route = useRoute();
+  const { idUsuario } = route.params;
+  const idDelUsuarioQueIngreso = idUsuario;  //--------> Pueden usar este id para hacer todas sus consultas en la base de datos
+  console.log("id de sala Xd con usuario.- " + idDelUsuarioQueIngreso);
+
   const userId = 1;  // Aquí defines el ID del usuario de manera constante, puedes modificar este valor.
 
   const [salas, setSalas] = useState([]);
@@ -57,7 +64,7 @@ const Salas = ({ navigation }) => {
   const renderSalaItem = ({ item }) => (
     <TouchableOpacity
       style={styles.burbuja}  // Estilo similar al de los productos en Home.js
-      onPress={() => navigation.navigate('ProductosSalas', { salaId: item.id })}
+      onPress={() => navigation.navigate('ProductosSalas', { salaId: item.id, idDelUsuarioQueIngreso:idDelUsuarioQueIngreso })}
     >
       <View style={styles.detalles}>
         <Text style={styles.nombre}>Sala: {item.id}</Text>
