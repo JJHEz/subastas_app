@@ -3,12 +3,11 @@ import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react
 import { collection, getDocs, query, where } from "firebase/firestore";
 import database from "../config/firebase";
 
-const ProductosSalas = ({ route }) => {
-  const { salaId } = route.params;  // Capturamos el ID de la sala desde los parámetros de la navegación
+const ProductosSalas = ({ route, navigation }) => {
+  const { salaId, idDelUsuarioQueIngreso } = route.params;  // Capturamos el ID de la sala desde los parámetros de la navegación
   const [productos, setProductos] = useState([]);
   const salaIdNumerico = parseInt(salaId, 10); // Convertir a número
-
-
+  
   useEffect(() => {
     const fetchProductos = async () => {
       try {
@@ -46,10 +45,15 @@ const ProductosSalas = ({ route }) => {
       </View>
     </TouchableOpacity>
   );
-
+//navigation.navigate('ProductoEnSubasta')
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Productos de la Sala {salaId} </Text>
+
+      <TouchableOpacity style={styles.botonInscribirse} onPress={() => navigation.navigate("ProductoEnSubasta", {idDelUsuarioQueIngreso:idDelUsuarioQueIngreso})}>
+        <Text style={styles.textoBoton}>Ir a subasta</Text>
+      </TouchableOpacity>
+
       {productos.length === 0 ? (
         <Text>No hay productos disponibles en esta sala.</Text>
       ) : (
@@ -97,6 +101,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 5,
+  },
+  botonInscribirse: {
+    backgroundColor: '#004a99',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    marginBottom: 20,
+    alignSelf: 'center', // para centrar el botón horizontalmente
   },
 });
 
