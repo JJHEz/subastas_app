@@ -80,7 +80,7 @@ export default function ProductoEnSubasta() {
     const diferenciaSegundos = Math.floor((fechaFin - fechaInicio) / 1000);
 
     let segundos = parseInt(diferenciaSegundos);
-    let segundosPorProducto = segundos / nro_productos
+    let segundosPorProducto = parseInt(segundos / nro_productos);
 
     setTiempoRestante(segundosPorProducto); // reiniciar tiempo a 60s para cada producto
 
