@@ -105,7 +105,7 @@ const Home = ({ navigation }) => {
   const renderItem = ({ item }) => ( 
     <TouchableOpacity
       style={styles.burbuja}
-      onPress={() => navigation.navigate('Producto', { producto: item })}
+      onPress={() => navigation.navigate('Producto', { producto: item, userId: idDelUsuarioQueIngreso })} // Navega a la pantalla de Producto con el item seleccionado
     >
       <Image source={{ uri: item.imagen }} style={styles.imagen} />
       <View style={styles.detalles}>
@@ -114,8 +114,8 @@ const Home = ({ navigation }) => {
         <Text>Estado: {item.estado_del_producto}</Text>
         <Text>Base: ${item.precio_base}</Text>
         <Text>Ubicación: {item.ubicacion}</Text>
-        <Text>Inicio: {item.fecha_de_subasta} a las {item.hora_de_subasta}</Text>
-        <Text>Fin: {item.hora_fin_subasta}</Text>
+        {/*<Text>Inicio: {item.fecha_de_subasta} a las {item.hora_de_subasta}</Text>
+        <Text>Fin: {item.hora_fin_subasta}</Text>*/}
         <Text>Vendido: {item.vendido ? "Sí" : "No"}</Text>
       </View>
     </TouchableOpacity>

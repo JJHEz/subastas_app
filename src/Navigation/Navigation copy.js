@@ -20,6 +20,20 @@ import SignUpScreen from '../screens/SignUpScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Configuración de Deep Linking (si es necesario)
+/*const linking = {
+  prefixes: ['http://localhost:8081', 'exp://192.168.100.90:8081'],
+  config: {
+    screens: {
+      Home: 'home/:id',
+      Producto1: 'producto1/:id',
+      Garantia: 'garantia/',
+      Salas: 'salas/',
+      ProductosSalas: 'productos_salas/:salaId',
+    },
+  },
+};*/
+
 // Pantalla para el Tab Navigator
 function TabNavigator( { route } ) {
   const { idUsuario } = route.params || {};
