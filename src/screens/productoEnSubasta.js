@@ -17,7 +17,8 @@ export default function ProductoEnSubasta() {
   const [mejorPuja, setMejorPuja] = useState(null);
   const [ganadorActual, setGanadorActual] = useState(null);
   const [usuario, setUsuario] = useState(null);
-  const [estadoGanador, setEstadoGanador] = useState({estado:"cargando"});
+  const [estadoGanador, setEstadoGanador] = useState({estado:" "});
+  const [ganadores, setGanadores] = useState(null);
 
   const route = useRoute();
   const { idDelUsuarioQueIngreso } = route.params;
@@ -252,6 +253,56 @@ const pujar = async () => {
     return `${min}:${seg.toString().padStart(2, '0')}`;
   };
 
+
+  useEffect(() => {
+    const obtenerGanadores = async () => {
+      try {
+      
+        const ganadoresData = [];
+
+        for (const producto of productos) {
+          const q = query(
+            collection(database, "oferta"),
+            where("id_producto_fk", "==", parseInt(producto.id))
+          );
+
+          const ofertasSnap = await getDocs(q);
+          let mejorOferta = null;
+
+          ofertasSnap.forEach(doc => {
+            const data = doc.data();
+            if (!mejorOferta || data.precio_oferta_actual > mejorOferta.precio_oferta_actual) {
+              mejorOferta = data;
+            }
+          });
+
+          let nombreUsuario = "No hay ganador";
+          if (mejorOferta) {
+            const usuarioRef = doc(database, "usuario", mejorOferta.id_usuario.toString());
+            const usuarioSnap = await getDoc(usuarioRef);
+            nombreUsuario = usuarioSnap.exists() ? usuarioSnap.data().nombre : "Desconocido";
+          }
+          
+          ganadoresData.push({
+            nombre: producto.nombre_producto,
+            imagen: producto.imagen,
+            precioFinal: mejorOferta?.precio_oferta_actual || producto.precio_base,
+            ganador: nombreUsuario,
+          });
+        }
+
+        setGanadores(ganadoresData);
+      } catch (error) {
+        console.error("Error al obtener ganadores:", error);
+      }
+    };
+
+    if (mostrarFinalizado) {
+      obtenerGanadores();
+    }
+  }, [mostrarFinalizado]);
+
+
   return (
     <ScrollView style={styles.scrollContainer}>
       <View style={styles.container}>
@@ -290,9 +341,23 @@ const pujar = async () => {
             </View>
           </View>
         ) : mostrarFinalizado && (
+          
+          <View style={{ marginTop: 20 }}>
           <Text style={{ fontSize: 20, marginTop: 30, fontWeight: 'bold', color: 'white' }}>
             🎉🎉 Subasta finalizada 🎉🎉
           </Text>
+          <Text style={styles.titulo}>Ganadores de la subasta</Text>
+          {ganadores && ganadores.map((item, index) => (
+            <View key={index} style={styles.card}>
+              <Image source={{ uri: item.imagen }} style={styles.productImage} />
+              <Text style={styles.infoText}>Producto: {item.nombre}</Text>
+              <Text style={[styles.infoText, { color: item.ganador === 'No hay ganador' ? 'red' : 'green' }]}>Ganador: {item.ganador}</Text>
+              <Text style={styles.infoText}>Precio final: ${item.precioFinal.toFixed(2)}</Text>
+            </View>
+          ))}
+        </View>
+
+
         )}
       </View>
     </ScrollView>
@@ -396,4 +461,20 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  card: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 8,
+  padding: 10,
+  marginBottom: 10,
+  backgroundColor: '#f9f9f9',
+},
+productImage: {
+  width: '100%',
+  height: 150,
+  resizeMode: 'contain',
+  borderRadius: 8,
+  marginBottom: 10,
+},
+
 });
