@@ -13,6 +13,7 @@ import Garantia from "../screens/garantia";
 import Salas from "../screens/salas";
 import ProductosSalas from "../screens/productosSalas";
 import ProductosGanados from "../screens/productosGanados";
+import PagoProducto from "../screens/pagoproducto";
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import SignUpScreen from '../screens/SignUpScreen';
@@ -70,7 +71,8 @@ function MyStack() {
       <Stack.Screen name="Producto" component={Producto} options={{ title: "Detalle del Producto" }} />
       <Stack.Screen name="Garantia" component={Garantia} options={{ title: "" }} />
       <Stack.Screen name="ProductosSalas" component={ProductosSalas} options={{ title: "Productos de la Sala" }} />
-      
+      {/*<Stack.Screen name="Pagoproducto" component={Pagoproducto} options={{ title: "" }} />*/}
+      <Stack.Screen name="pagoproducto" component={PagoProducto} options={{ title: "Pago Producto" }} />
       <Stack.Screen name="subirProducto" component={subirProducto} options={{ headerShown: false }}/>   
       <Stack.Screen name="ProductoEnSubasta" component={ProductoEnSubasta} options={{ title: "Subasta en linea" }}/>
     </Stack.Navigator>
