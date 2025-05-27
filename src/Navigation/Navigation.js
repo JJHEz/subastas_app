@@ -6,12 +6,13 @@ import { FAB } from 'react-native-paper';
 import { StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Home from "../screens/home";
 import Producto from "../screens/producto";
 import Garantia from "../screens/garantia";
-import Producto1 from "../screens/producto1";
 import Salas from "../screens/salas";
 import ProductosSalas from "../screens/productosSalas";
+import ProductosGanados from "../screens/productosGanados";
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import SignUpScreen from '../screens/SignUpScreen';
@@ -19,33 +20,33 @@ import SignUpScreen from '../screens/SignUpScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Configuración de Deep Linking (si es necesario)
-const linking = {
-  prefixes: ['http://localhost:8081', 'exp://192.168.100.90:8081'],
-  config: {
-    screens: {
-      Home: 'home/:id',
-      Producto1: 'producto1/:id',
-      Garantia: 'garantia/',
-      Salas: 'salas/',
-      ProductosSalas: 'productos_salas/:salaId',
-    },
-  },
-};
-
 // Pantalla para el Tab Navigator
 function TabNavigator( { route } ) {
   const { idUsuario } = route.params || {};
   return (
     <Tab.Navigator
       initialRouteName="Home"
-      screenOptions={{
+      screenOptions={({ route }) => ({
         tabBarActiveTintColor: '#007BFF',
         tabBarInactiveTintColor: 'gray',
-      }}
+        tabBarIcon: ({ color, size }) => {
+          let iconName;
+
+          if (route.name === 'Home') {
+            iconName = 'home-outline';
+          } else if (route.name === 'Salas') {
+            iconName = 'people-outline';
+          } else if (route.name === 'ProductosGanados') {
+            iconName = 'gift-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+      })}
     >
       <Tab.Screen name="Home" component={Home} options={{ title: "Productos" }} initialParams={{ idUsuario }} />
       <Tab.Screen name="Salas" component={Salas} options={{ title: "Salas" }} initialParams={{ idUsuario }} />
+      <Tab.Screen name="ProductosGanados" component={ProductosGanados} options={{ title: "Ganados" }} initialParams={{ idUsuario }} />
     </Tab.Navigator>
   );
 }
@@ -69,8 +70,7 @@ function MyStack() {
       <Stack.Screen name="Producto" component={Producto} options={{ title: "Detalle del Producto" }} />
       <Stack.Screen name="Garantia" component={Garantia} options={{ title: "" }} />
       <Stack.Screen name="ProductosSalas" component={ProductosSalas} options={{ title: "Productos de la Sala" }} />
-      <Stack.Screen name="Producto1" component={Producto1} options={{ title: "Detalle del Producto" }} />
-
+      
       <Stack.Screen name="subirProducto" component={subirProducto} options={{ headerShown: false }}/>   
       <Stack.Screen name="ProductoEnSubasta" component={ProductoEnSubasta} options={{ title: "Subasta en linea" }}/>
     </Stack.Navigator>

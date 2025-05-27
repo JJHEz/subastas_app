@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as ImagePicker from 'expo-image-picker';
+import { useRoute } from '@react-navigation/native';
 
 export default function Garantia() {
-  //const { producto} = route.params;
+  //const { producto, user} = route.params;
 
   const [qrData, setQrData] = useState('');
   const [imageUri, setImageUri] = useState('');
