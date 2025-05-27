@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import database from "../config/firebase";
 import { useRoute } from '@react-navigation/native';
 
@@ -11,10 +11,11 @@ const Salas = ({ navigation }) => {
   const idDelUsuarioQueIngreso = idUsuario;  //--------> Pueden usar este id para hacer todas sus consultas en la base de datos
   console.log("id de sala Xd con usuario.- " + idDelUsuarioQueIngreso);
 
-  const userId = 1;  // Aquí defines el ID del usuario de manera constante, puedes modificar este valor.
+  const userId = parseInt(idUsuario);  // Aquí defines el ID del usuario de manera constante, puedes modificar este valor.
 
   const [salas, setSalas] = useState([]);
   const [categorias, setCategorias] = useState({});  // Aquí almacenamos las categorías
+  const [nombreUsuario, setNombreUsuario] = useState("");
 
   // Función para obtener las categorías
   const fetchCategorias = async () => {
@@ -56,9 +57,25 @@ const Salas = ({ navigation }) => {
     }
   };
 
+  const fetchNombreUsuario = async () => {
+    try {
+      const usuarioRef = doc(database, "usuario", String(idDelUsuarioQueIngreso));
+      const usuarioSnap = await getDoc(usuarioRef);
+      if (usuarioSnap.exists()) {
+        const data = usuarioSnap.data();
+        setNombreUsuario(data.nombre); // Ajusta si el campo se llama diferente
+      } else {
+        console.warn("No se encontró el usuario con ese ID.");
+      }
+    } catch (error) {
+      console.error("Error al obtener el nombre del usuario:", error);
+    }
+  };
+
   useEffect(() => {
     fetchCategorias(); // Llamamos a la función que obtiene las categorías
     fetchSalas();  // Llamamos a la función que obtiene las salas filtradas por el userId
+    fetchNombreUsuario(); // Llamamos a la función que obtiene el nombre del usuario
   }, [userId]);
 
   const renderSalaItem = ({ item }) => (
@@ -79,7 +96,7 @@ const Salas = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Salas del Usuario {userId}</Text>
+      <Text style={styles.header}>Salas de {nombreUsuario || `usuario ${userId}`}</Text>
       {salas.length === 0 ? (
         <Text>No hay salas disponibles para este usuario.</Text>
       ) : (
