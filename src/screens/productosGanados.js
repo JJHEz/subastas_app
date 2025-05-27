@@ -1,64 +1,76 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, Image, StyleSheet } from 'react-native';
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 import database from "../config/firebase";
+import { TouchableOpacity } from 'react-native';
 
-const ProductosGanados = ({}) => {
-  
+const ProductosGanados = ({ navigation }) => {
   const route = useRoute();
   const { idUsuario } = route.params || {};
   const usuarioId = parseInt(idUsuario);
+
   const [productosGanados, setProductosGanados] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  useEffect(() => {
-    const fetchProductosGanados = async () => {
-      try {
-        const ofertasSnapshot = await getDocs(collection(database, "oferta"));
-        const productosGanadosTemp = [];
+  const fetchProductosGanados = async () => {
+    try {
+      const ofertasSnapshot = await getDocs(collection(database, "oferta"));
+      const productosGanadosTemp = [];
 
-        for (const ofertaDoc of ofertasSnapshot.docs) {
-          const oferta = ofertaDoc.data();
+      for (const ofertaDoc of ofertasSnapshot.docs) {
+        const oferta = ofertaDoc.data();
 
-          if (String(oferta.id_usuario) === String(usuarioId)) {
-            const productoRef = doc(database, "producto", String(oferta.id_producto_fk));
-            const productoSnap = await getDoc(productoRef);
+        if (String(oferta.id_usuario) === String(usuarioId)) {
+          const productoRef = doc(database, "producto", String(oferta.id_producto_fk));
+          const productoSnap = await getDoc(productoRef);
 
-            if (productoSnap.exists()) {
-              const producto = productoSnap.data();
-              productosGanadosTemp.push({
-                id: productoSnap.id,
-                ...producto,
-                precio_ganado: oferta.precio_oferta_actual,
-              });
-            }
+          if (productoSnap.exists()) {
+            const producto = productoSnap.data();
+            productosGanadosTemp.push({
+              id: productoSnap.id,
+              ...producto,
+              precio_ganado: oferta.precio_oferta_actual,
+            });
           }
         }
-
-        setProductosGanados(productosGanadosTemp);
-        setCargando(false);
-      } catch (error) {
-        console.error("Error al obtener productos ganados:", error);
       }
-    };
 
-    if (usuarioId) {
-      fetchProductosGanados();
+      setProductosGanados(productosGanadosTemp);
+      setCargando(false);
+    } catch (error) {
+      console.error("Error al obtener productos ganados:", error);
+      setCargando(false);
     }
-  }, [usuarioId]);
+  };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Image source={{ uri: item.imagen }} style={styles.imagen} />
-      <View style={styles.detalles}>
-        <Text style={styles.nombre}>{item.nombre_producto}</Text>
-        <Text>Estado: {item.estado_del_producto}</Text>
-        <Text>Ganado por: ${item.precio_ganado}</Text>
-        <Text>Ubicación: {item.ubicacion}</Text>
-      </View>
-    </View>
+  useFocusEffect(
+    useCallback(() => {
+      if (usuarioId) {
+        setCargando(true);
+        fetchProductosGanados();
+      }
+    }, [usuarioId])
   );
+
+const renderItem = ({ item }) => (
+  <TouchableOpacity 
+    style={styles.card} 
+    onPress={() => navigation.navigate('pagoproducto', {
+      idUsuario: String(usuarioId),
+      idProducto: item.id,
+      producto: item
+    })}
+  >
+    <Image source={{ uri: item.imagen }} style={styles.imagen} />
+    <View style={styles.detalles}>
+      <Text style={styles.nombre}>{item.nombre_producto}</Text>
+      <Text>Estado: {item.estado_del_producto}</Text>
+      <Text>Ganado por: ${item.precio_ganado}</Text>
+      <Text>Ubicación: {item.ubicacion}</Text>
+    </View>
+  </TouchableOpacity>
+);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#E6F0FF', padding: 10 }}>
@@ -103,3 +115,4 @@ const styles = StyleSheet.create({
 });
 
 export default ProductosGanados;
+
