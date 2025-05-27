@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc, getDoc } from 'firebase/firestore';
+import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc, getDoc, serverTimestamp ,orderBy, limit} from 'firebase/firestore';
 import database from '../config/firebase';
 import { useRoute } from '@react-navigation/native';
 
@@ -24,8 +24,23 @@ export default function ProductoEnSubasta() {
   const { idDelUsuarioQueIngreso } = route.params;
   const porcentajeIncrementoPujas = 0.10;
   const idUsuario = idDelUsuarioQueIngreso;
+
   const obtenerHoraGlobal = async () => {
-    return new Date().getTime(); // Simula hora global
+    const docRef = doc(database, "tiempo", "hora");
+
+    // Establece el timestamp del servidor
+    await setDoc(docRef, { timestamp: serverTimestamp() });
+
+    // Espera un pequeño momento para que el servidor registre el timestamp
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Obtiene el documento actualizado con la hora del servidor
+    const docSnap = await getDoc(docRef);
+
+    // Convierte a milisegundos como lo hacía la función simulada
+    const timestamp = docSnap.data().timestamp.toDate().getTime();
+
+    return timestamp; // Mismo tipo: número en milisegundos
   };
 
   useEffect(() => {
@@ -67,58 +82,61 @@ export default function ProductoEnSubasta() {
     fetchDatos();
   }, []);
 
-useEffect(() => {
-  if (!martillero || productos.length === 0) return;
+  useEffect(() => {
+    if (!martillero || productos.length === 0) return;
 
-  const iniciarSubasta = async () => {
-    const ahora = await obtenerHoraGlobal();
+    let intervalId;
 
-    const [horaInicio, minutoInicio] = martillero.hora_ini.split(':').map(Number);
-    const [horaFin, minutoFin] = martillero.hora_fin.split(':').map(Number);
+    const iniciarTemporizador = async () => {
+      const ahora = await obtenerHoraGlobal();
 
-    const fechaInicio = new Date();
-    fechaInicio.setHours(horaInicio, minutoInicio, 0, 0);
+      const [horaInicio, minutoInicio] = martillero.hora_ini.split(':').map(Number);
+      const [horaFin, minutoFin] = martillero.hora_fin.split(':').map(Number);
 
-    const fechaFin = new Date();
-    fechaFin.setHours(horaFin, minutoFin, 0, 0);
+      const fechaInicio = new Date();
+      fechaInicio.setHours(horaInicio, minutoInicio, 0, 0);
 
-    const duracionTotal = Math.floor((fechaFin.getTime() - fechaInicio.getTime()) / 1000);
-    const duracionPorProducto = Math.floor(duracionTotal / martillero.nro_productos);
+      const fechaFin = new Date();
+      fechaFin.setHours(horaFin, minutoFin, 0, 0);
 
-    const segundosDesdeInicio = Math.floor((ahora - fechaInicio.getTime()) / 1000);
+      const duracionTotal = Math.floor((fechaFin.getTime() - fechaInicio.getTime()) / 1000);
+      const duracionPorProducto = Math.floor(duracionTotal / martillero.nro_productos);
 
-    if (segundosDesdeInicio >= 0 && segundosDesdeInicio < duracionTotal) {
-      const productoIndex = Math.floor(segundosDesdeInicio / duracionPorProducto);
-      const tiempoRestanteActual = duracionPorProducto - (segundosDesdeInicio % duracionPorProducto);
+      const segundosDesdeInicio = Math.floor((ahora - fechaInicio.getTime()) / 1000);
 
-      setProductoActual(productoIndex);
-      setTiempoRestante(tiempoRestanteActual);
+      if (segundosDesdeInicio >= 0 && segundosDesdeInicio < duracionTotal) {
+        const productoIndex = Math.floor(segundosDesdeInicio / duracionPorProducto);
+        const tiempoRestanteActual = duracionPorProducto - (segundosDesdeInicio % duracionPorProducto);
 
-      intervaloRef.current = setInterval(() => {
-        setTiempoRestante(prev => {
-          if (prev > 1) {
-            return prev - 1;
-          } else {
-            clearInterval(intervaloRef.current);
+        setProductoActual(productoIndex);
+        setTiempoRestante(tiempoRestanteActual);
+
+        clearInterval(intervaloRef.current);  // Limpia el anterior
+        intervalId = setInterval(() => {
+          setTiempoRestante(prev => {
+            if (prev > 1) return prev - 1;
+            clearInterval(intervalId);
+
             if (productoIndex + 1 < productos.length) {
               setProductoActual(productoIndex + 1);
-              setTiempoRestante(duracionPorProducto);
+              setTiempoRestante(duracionPorProducto); // Reiniciar tiempo
             } else {
               setMostrarFinalizado(true);
             }
             return 0;
-          }
-        });
-      }, 1000);
-    } else {
-      setMostrarFinalizado(true);
-    }
-  };
+          });
+        }, 1000);
+        intervaloRef.current = intervalId;
+      } else {
+        setMostrarFinalizado(true);
+      }
+    };
 
-  iniciarSubasta();
+    iniciarTemporizador();
 
-  return () => clearInterval(intervaloRef.current);
-}, [martillero, productos]);
+    return () => clearInterval(intervaloRef.current);
+  }, [martillero, productos, productoActual]); // ← Incluye productoActual
+
 
   const producto = productos[productoActual];
 
