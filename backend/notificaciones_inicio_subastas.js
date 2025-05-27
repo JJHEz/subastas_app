@@ -1,4 +1,4 @@
-require("dotenv").config();
+require('dotenv').config({ path: './backend/.env' });
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 const cron = require("node-cron");
