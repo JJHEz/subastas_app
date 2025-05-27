@@ -26,20 +26,11 @@ export default function ProductoEnSubasta() {
 
   const obtenerHoraGlobal = async () => {
     const docRef = doc(database, "tiempo", "hora");
-
-    // Establece el timestamp del servidor
     await setDoc(docRef, { timestamp: serverTimestamp() });
-
-    // Espera un pequeño momento para que el servidor registre el timestamp
     await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Obtiene el documento actualizado con la hora del servidor
     const docSnap = await getDoc(docRef);
-
-    // Convierte a milisegundos como lo hacía la función simulada
     const timestamp = docSnap.data().timestamp.toDate().getTime();
-
-    return timestamp; // Mismo tipo: número en milisegundos
+    return timestamp; 
   };
 
   useEffect(() => {
@@ -110,7 +101,7 @@ export default function ProductoEnSubasta() {
         setProductoActual(productoIndex);
         setTiempoRestante(tiempoRestanteActual);
 
-        clearInterval(intervaloRef.current);  // Limpia el anterior
+        clearInterval(intervaloRef.current);  //Limpia
         intervalId = setInterval(() => {
           setTiempoRestante(prev => {
             if (prev > 1) return prev - 1;
@@ -118,7 +109,7 @@ export default function ProductoEnSubasta() {
 
             if (productoIndex + 1 < productos.length) {
               setProductoActual(productoIndex + 1);
-              setTiempoRestante(duracionPorProducto); // Reiniciar tiempo
+              setTiempoRestante(duracionPorProducto); // Reinicio
             } else {
               setMostrarFinalizado(true);
             }
@@ -134,7 +125,7 @@ export default function ProductoEnSubasta() {
     iniciarTemporizador();
 
     return () => clearInterval(intervaloRef.current);
-  }, [martillero, productos, productoActual]); // ← Incluye productoActual
+  }, [martillero, productos, productoActual]);
 
 
   const producto = productos[productoActual];
@@ -149,7 +140,7 @@ useEffect(() => {
 
   const unsubscribe = onSnapshot(q, async (snapshot) => {
     const nuevasPujas = snapshot.docs.map(doc => doc.data());
-    // Puedes actualizar el estado para mostrar la última puja
+
     if (nuevasPujas.length > 0) {
       const ultimaPuja = nuevasPujas[nuevasPujas.length - 1];
 
