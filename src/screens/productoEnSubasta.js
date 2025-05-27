@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc, getDoc } from 'firebase/firestore';
+import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc, getDoc, serverTimestamp ,orderBy, limit} from 'firebase/firestore';
 import database from '../config/firebase';
 import { useRoute } from '@react-navigation/native';
 
@@ -23,8 +23,23 @@ export default function ProductoEnSubasta() {
   const { idDelUsuarioQueIngreso } = route.params;
   const porcentajeIncrementoPujas = 0.10;
   const idUsuario = idDelUsuarioQueIngreso;
+
   const obtenerHoraGlobal = async () => {
-    return new Date().getTime(); // Simula hora global
+    const docRef = doc(database, "tiempo", "hora");
+
+    // Establece el timestamp del servidor
+    await setDoc(docRef, { timestamp: serverTimestamp() });
+
+    // Espera un pequeño momento para que el servidor registre el timestamp
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Obtiene el documento actualizado con la hora del servidor
+    const docSnap = await getDoc(docRef);
+
+    // Convierte a milisegundos como lo hacía la función simulada
+    const timestamp = docSnap.data().timestamp.toDate().getTime();
+
+    return timestamp; // Mismo tipo: número en milisegundos
   };
 
   useEffect(() => {
