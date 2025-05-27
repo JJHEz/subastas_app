@@ -120,6 +120,7 @@ export default function ProductoEnSubasta() {
             if (productoIndex + 1 < productos.length) {
               setProductoActual(productoIndex + 1);
               setTiempoRestante(duracionPorProducto); // Reiniciar tiempo
+              setEstadoGanador({estado:" "});
             } else {
               setMostrarFinalizado(true);
             }
@@ -348,7 +349,7 @@ const pujar = async () => {
 
             <View style={styles.bidContainer}>
               <Text style={styles.ganando}>Ganando{"\n"}{ganadorActual ? ganadorActual.nombre : "Cargando"}{"\n"}bs {ganadorActual ? ganadorActual.precio_oferta_actual : producto.precio_base}</Text>
-              <Text style={styles.subtitulo}>23 participantes</Text>
+              
               <Text style={[styles.estado, { color: estadoGanador.estado === '¡Vas Ganando!' ? 'green' : 'red' }]}>{estadoGanador.estado}</Text>
               <View style={styles.precioOferta}>
                 <Text style={styles.textoOferta}>Bs {mejorPuja ? mejorPuja.precio_oferta_actual : producto.precio_base}</Text>
