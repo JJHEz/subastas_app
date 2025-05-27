@@ -4,6 +4,8 @@ import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc, g
 import database from '../config/firebase';
 import { useRoute } from '@react-navigation/native';
 
+
+
 export default function ProductoEnSubasta() {
   const [martillero, setMartillero] = useState(null);
   const [productos, setProductos] = useState([]);
@@ -21,6 +23,9 @@ export default function ProductoEnSubasta() {
   const { idDelUsuarioQueIngreso } = route.params;
   const porcentajeIncrementoPujas = 0.10;
   const idUsuario = idDelUsuarioQueIngreso;
+  const obtenerHoraGlobal = async () => {
+    return new Date().getTime(); // Simula hora global
+  };
 
   useEffect(() => {
     const getUser = async () => {
@@ -64,48 +69,52 @@ export default function ProductoEnSubasta() {
 useEffect(() => {
   if (!martillero || productos.length === 0) return;
 
-  const ahora = Date.now();
+  const iniciarSubasta = async () => {
+    const ahora = await obtenerHoraGlobal();
 
-  const [horaInicio, minutoInicio] = martillero.hora_ini.split(':').map(Number);
-  const [horaFin, minutoFin] = martillero.hora_fin.split(':').map(Number);
+    const [horaInicio, minutoInicio] = martillero.hora_ini.split(':').map(Number);
+    const [horaFin, minutoFin] = martillero.hora_fin.split(':').map(Number);
 
-  const fechaInicio = new Date();
-  fechaInicio.setHours(horaInicio, minutoInicio, 0, 0);
+    const fechaInicio = new Date();
+    fechaInicio.setHours(horaInicio, minutoInicio, 0, 0);
 
-  const fechaFin = new Date();
-  fechaFin.setHours(horaFin, minutoFin, 0, 0);
+    const fechaFin = new Date();
+    fechaFin.setHours(horaFin, minutoFin, 0, 0);
 
-  const duracionTotal = Math.floor((fechaFin.getTime() - fechaInicio.getTime()) / 1000);
-  const duracionPorProducto = Math.floor(duracionTotal / martillero.nro_productos);
+    const duracionTotal = Math.floor((fechaFin.getTime() - fechaInicio.getTime()) / 1000);
+    const duracionPorProducto = Math.floor(duracionTotal / martillero.nro_productos);
 
-  const segundosDesdeInicio = Math.floor((ahora - fechaInicio.getTime()) / 1000);
+    const segundosDesdeInicio = Math.floor((ahora - fechaInicio.getTime()) / 1000);
 
-  if (segundosDesdeInicio >= 0 && segundosDesdeInicio < duracionTotal) {
-    const productoIndex = Math.floor(segundosDesdeInicio / duracionPorProducto);
-    const tiempoRestanteActual = duracionPorProducto - (segundosDesdeInicio % duracionPorProducto);
+    if (segundosDesdeInicio >= 0 && segundosDesdeInicio < duracionTotal) {
+      const productoIndex = Math.floor(segundosDesdeInicio / duracionPorProducto);
+      const tiempoRestanteActual = duracionPorProducto - (segundosDesdeInicio % duracionPorProducto);
 
-    setProductoActual(productoIndex);
-    setTiempoRestante(tiempoRestanteActual);
+      setProductoActual(productoIndex);
+      setTiempoRestante(tiempoRestanteActual);
 
-    intervaloRef.current = setInterval(() => {
-      setTiempoRestante(prev => {
-        if (prev > 1) {
-          return prev - 1;
-        } else {
-          clearInterval(intervaloRef.current);
-          if (productoIndex + 1 < productos.length) {
-            setProductoActual(productoIndex + 1);
-            setTiempoRestante(duracionPorProducto);
+      intervaloRef.current = setInterval(() => {
+        setTiempoRestante(prev => {
+          if (prev > 1) {
+            return prev - 1;
           } else {
-            setMostrarFinalizado(true);
+            clearInterval(intervaloRef.current);
+            if (productoIndex + 1 < productos.length) {
+              setProductoActual(productoIndex + 1);
+              setTiempoRestante(duracionPorProducto);
+            } else {
+              setMostrarFinalizado(true);
+            }
+            return 0;
           }
-          return 0;
-        }
-      });
-    }, 1000);
-  } else {
-    setMostrarFinalizado(true);
-  }
+        });
+      }, 1000);
+    } else {
+      setMostrarFinalizado(true);
+    }
+  };
+
+  iniciarSubasta();
 
   return () => clearInterval(intervaloRef.current);
 }, [martillero, productos]);
