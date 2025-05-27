@@ -54,11 +54,16 @@ async function enviarCorreos() {
 
     const horaIni = martillero.hora_ini; 
     const [hora, minutos] = horaIni.split(":").map(Number);
+
     const diffHoras = hora - horaActual;
     const diffMinutos = minutos - minutosActuales;
+
+    // Calculamos minutos faltantes reales
     const minutosFaltantes = diffHoras * 60 + diffMinutos;
 
-    if (minutosFaltantes >= 9 && minutosFaltantes <= 10) {
+    console.log(`Minutos faltantes para subasta a las ${horaIni}: ${minutosFaltantes}`);
+
+    if (minutosFaltantes == 10) {
       console.log(`Enviando correos para subasta que inicia a las ${horaIni}`);
 
       const participantes = martillero.participantes || [];
@@ -80,21 +85,21 @@ async function enviarCorreos() {
         const mailOptions = {
           from: process.env.GMAIL_USER,
           to: usuario.correo_electronico,
-          subject: "📢 Recordatorio: Subasta próxima",
+          subject: "Recordatorio: Subasta próxima",
           html: `
             <p>Hola <b>${usuario.nombre}</b>,</p>
-            <p>Tu subasta comenzará en 10 minutos (a las ${horaIni}).</p>
+            <p>Tu subasta comenzará en 10 minutos, a las ${horaIni}.</p>
             <p>¡Prepárate para participar!</p>
           `,
         };
 
         try {
           await transporter.sendMail(mailOptions);
-          console.log(`✅ Correo enviado a ${usuario.nombre}`);
+          console.log(`Correo enviado a ${usuario.nombre}`);
           await new Promise((res) => setTimeout(res, 1000)); // delay opcional
         } catch (error) {
           console.error(
-            `❌ Error enviando correo a ${usuario.nombre}:`,
+            `Error enviando correo a ${usuario.nombre}:`,
             error.message,
           );
         }
@@ -104,6 +109,6 @@ async function enviarCorreos() {
 }
 
 cron.schedule("* * * * *", () => {
-  console.log("⏰ Revisión periódica para envío de correos...");
+  console.log("Revisión periodica para envío de correos...");
   enviarCorreos().catch(console.error);
 });
