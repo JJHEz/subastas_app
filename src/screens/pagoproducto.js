@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import database  from '../config/firebase';
 import { doc, getDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 export default function PagoProducto() {
   const [montoProducto, setMontoProducto] = useState(null);
@@ -16,7 +17,7 @@ export default function PagoProducto() {
   const route = useRoute();
   const { idUsuario, idProducto, producto } = route.params || {};
   const productoIDnum = Number(idProducto);
-
+  const navigation = useNavigation();
   // IDs para obtener los documentos
   const productoID = idProducto;//'1'; // Cambia por el real
   const martilleroID = String(producto?.id_martillero_fk); //'1'; // Cambia por el real
@@ -113,6 +114,10 @@ export default function PagoProducto() {
     });
 
     setEstadoPago('validado');
+    setTimeout(() => {
+        navigation.navigate('TabNavigator',{idUsuario});
+      }, 1500);
+
   } catch (error) {
     console.error('Error guardando el comprobante en BD:', error);
     setEstadoPago('pendiente');
@@ -160,7 +165,7 @@ export default function PagoProducto() {
 
           <TouchableOpacity onPress={subirComprobante} style={styles.botonSubir}>
             <Image
-              source={require('../../assets/images/react-logo.png')}
+              source={require('../../assets/images/subir-archivo.png')}
               style={styles.iconoClip}
             />
             <Text style={styles.textoSubir}>Subir imagen de comprobante</Text>
@@ -178,9 +183,9 @@ export default function PagoProducto() {
             <Text style={styles.textoBoton}>Pagar</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity>
+          {/*<TouchableOpacity>
             <Text style={styles.textoSaltar}>Saltar</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>*/}
 
           <View style={{ marginTop: 10 }}>
             {renderEstadoPago()}

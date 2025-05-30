@@ -66,12 +66,12 @@ function MyStack() {
       <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }}/>
-      
+      <Stack.Screen name="Home" component={Home} options={{ title: "Home" }}/>
       {/* Definir las pantallas adicionales dentro del Stack */}
       <Stack.Screen name="Producto" component={Producto} options={{ title: "Detalle del Producto" }} />
       <Stack.Screen name="Garantia" component={Garantia} options={{ title: "" }} />
       <Stack.Screen name="ProductosSalas" component={ProductosSalas} options={{ title: "Productos de la Sala" }} />
-      {/*<Stack.Screen name="Pagoproducto" component={Pagoproducto} options={{ title: "" }} />*/}
+     
       <Stack.Screen name="pagoproducto" component={PagoProducto} options={{ title: "Pago Producto" }} />
       <Stack.Screen name="subirProducto" component={subirProducto} options={{ headerShown: false }}/>   
       <Stack.Screen name="ProductoEnSubasta" component={ProductoEnSubasta} options={{ title: "Subasta en linea" }}/>
