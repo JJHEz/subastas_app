@@ -81,19 +81,19 @@ export default function SignUpScreen({ navigation }) {
         <Text style={styles.welcomeText}>Bienvenido a YoloKiero</Text>
         <View>
           {errors.name && <Text style={styles.asterisk}> *</Text>}
-          <TextInput placeholder="Nombre de Usuario" style={styles.input} value={name} onChangeText={setName}/>
+          <TextInput placeholder="Nombre de Usuario" placeholderTextColor="#666" style={styles.input} value={name} onChangeText={setName}/>
         </View>
         <View>
           {errors.password && <Text style={styles.asterisk}> *</Text>}
-          <TextInput placeholder="Contraseña" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
+          <TextInput placeholder="Contraseña" placeholderTextColor="#666" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
         </View>
         <View>
           {errors.email && <Text style={styles.asterisk}> *</Text>}
-          <TextInput placeholder="E - Mail" style={styles.input} value={email} onChangeText={setEmail}/>
+          <TextInput placeholder="E - Mail" placeholderTextColor="#666" style={styles.input} value={email} onChangeText={setEmail}/>
         </View>
         <View>
           {errors.phone && <Text style={styles.asterisk}> *</Text>}
-          <TextInput placeholder="Teléfono" style={styles.input} keyboardType="numeric" value={phone} onChangeText={setPhone}/>
+          <TextInput placeholder="Teléfono" placeholderTextColor="#666" style={styles.input} keyboardType="numeric" value={phone} onChangeText={setPhone}/>
         </View>
         
         

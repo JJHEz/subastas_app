@@ -21,9 +21,10 @@ export default function ProductoEnSubasta() {
   const [ganadores, setGanadores] = useState(null);
 
   const route = useRoute();
-  const { idDelUsuarioQueIngreso } = route.params;
+  const { idDelUsuarioQueIngreso, idMartillero } = route.params;
   const porcentajeIncrementoPujas = 0.10;
   const idUsuario = idDelUsuarioQueIngreso;
+
 
   const obtenerHoraGlobal = async () => {
     const docRef = doc(database, "tiempo", "hora");
@@ -63,7 +64,7 @@ export default function ProductoEnSubasta() {
       try {
         
         const martilleroRef = collection(database, 'martillero');
-        const snapshot = await getDocs(query(martilleroRef, where('__name__', '==', '1')));
+        const snapshot = await getDocs(query(martilleroRef, where('__name__', '==', idMartillero.toString())));
         if (!snapshot.empty) {
           const doc = snapshot.docs[0];
           setMartillero({ id: doc.id, ...doc.data() });
@@ -71,7 +72,7 @@ export default function ProductoEnSubasta() {
 
         
         const productosRef = collection(database, 'producto');
-        const productosSnap = await getDocs(query(productosRef, where('id_martillero_fk', '==', 1)));
+        const productosSnap = await getDocs(query(productosRef, where('id_martillero_fk', '==', idMartillero)));
         const productosData = productosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setProductos(productosData);
       } catch (error) {
@@ -163,7 +164,7 @@ useEffect(() => {
         setMejorPuja({
           id_producto_fk: ultimaPuja.id_producto_fk,
           id_usuario: ultimaPuja.id_usuario,
-          precio_oferta_actual: (ultimaPuja.precio_oferta_actual + (producto.precio_base * porcentajeIncrementoPujas))
+          precio_oferta_actual: parseInt((ultimaPuja.precio_oferta_actual + (producto.precio_base * porcentajeIncrementoPujas)))
         });
 
         setGanadorActual({
@@ -172,6 +173,13 @@ useEffect(() => {
           precio_oferta_actual: ultimaPuja.precio_oferta_actual,
           id_producto_fk: ultimaPuja.id_producto_fk
         });
+
+        const productoRef = doc(database, 'producto', producto.id.toString());
+        await updateDoc(productoRef, {
+          vendido: true
+        }); 
+
+
 
         if(usuarioData.nombre === usuario.nombre){
           setEstadoGanador({
@@ -190,7 +198,7 @@ useEffect(() => {
       }
     
     }else{
-      setMejorPuja({precio_oferta_actual: (producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas))});
+      setMejorPuja({precio_oferta_actual: parseInt((producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas)))});
       setGanadorActual({
         nombre: "Sin ofertas",
         precio_oferta_actual: (producto.precio_base)
@@ -217,7 +225,7 @@ const pujar = async () => {
     try {
       const primeraPuja = ofertaExistentes.docs[0].data();
       const precio = primeraPuja.precio_oferta_actual;
-      const incrementoDePuja = precio + (producto.precio_base * porcentajeIncrementoPujas);
+      const incrementoDePuja = parseInt(precio + (producto.precio_base * porcentajeIncrementoPujas));
 
       const refOferta = doc(database, 'oferta', ofertaExistentes.docs[0].id);
       await updateDoc(refOferta, {
@@ -231,7 +239,7 @@ const pujar = async () => {
 
   } else {
     try {
-      const primeraPuja = producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas);
+      const primeraPuja = parseInt(producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas));
       await setDoc(doc(database, 'oferta', nuevoId.toString()), {
         precio_oferta_actual: primeraPuja,
         id_producto_fk: parseInt(producto.id),
