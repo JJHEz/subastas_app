@@ -101,7 +101,7 @@ const ProductosSalas = ({ route, navigation }) => {
         }else if(horaActual >= martillero.horaFin){
           alert("La subasta finalizo a las " + martillero.horaFin);
         }else{
-          navigation.navigate("ProductoEnSubasta", {idDelUsuarioQueIngreso:idDelUsuarioQueIngreso});
+          navigation.navigate("ProductoEnSubasta", {idDelUsuarioQueIngreso:idDelUsuarioQueIngreso, idMartillero: salaIdNumerico});
         }
       }else{
         alert("La subasta finalizo en la fecha " + martillero.fechaInicio);

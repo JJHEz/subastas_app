@@ -248,12 +248,12 @@ export default function AddProductForm() {
 
         <View style={styles.inputRow}>
           {errors.title && <Text style={styles.asterisk}> *</Text>}
-          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Nombre" value={title} onChangeText={setTitle} />
+          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Nombre" placeholderTextColor="#666" value={title} onChangeText={setTitle} />
         </View>
 
         <View style={styles.inputRow}>
           {errors.descripcion && <Text style={styles.asterisk}> *</Text>}
-          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Descripción" value={descripcion} onChangeText={setDescripcion} />
+          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Descripción" placeholderTextColor="#666" value={descripcion} onChangeText={setDescripcion} />
         </View>
 
         <View style={styles.inputRow}>
@@ -276,7 +276,7 @@ export default function AddProductForm() {
 
         <View style={styles.inputRow}>
           {errors.estado && <Text style={styles.asterisk}> *</Text>}
-          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Estado" value={estado} onChangeText={setEstado} />
+          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Estado" placeholderTextColor="#666" value={estado} onChangeText={setEstado} />
         </View>
         
         <View style={styles.inputRow}>
@@ -284,6 +284,7 @@ export default function AddProductForm() {
           <TextInput
             style={[styles.input, { flex: 1 }]}
             placeholder="Precio Base"
+            placeholderTextColor="#666"
             keyboardType="numeric"
             value={precioBase}
             onChangeText={setPrecioBase}
@@ -292,7 +293,7 @@ export default function AddProductForm() {
 
         <View style={styles.inputRow}>
           {errors.ubicacion && <Text style={styles.asterisk}> *</Text>}
-          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Ubicación" value={ubicacion} onChangeText={setUbicacion} />
+          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Ubicación" placeholderTextColor="#666" value={ubicacion} onChangeText={setUbicacion} />
         </View>
 
         <TouchableOpacity style={styles.submitBtn} onPress={addProducto}>
