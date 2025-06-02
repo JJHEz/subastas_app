@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { collection, getDocs, query, where, getDoc, doc } from "firebase/firestore";
+import { collection, getDocs, query, where, getDoc, doc, deleteDoc} from "firebase/firestore";
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import database from "../config/firebase";
 import { FAB } from 'react-native-paper';
@@ -13,6 +13,14 @@ const MisProductos = ({ navigation }) => {
   const [nombreUsuario, setNombreUsuario] = useState("");
   const [productosSubidos, setProductosSubidos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const eliminarProducto = async (idProducto) => {
+    try {
+      await deleteDoc(doc(database, "producto", idProducto));
+      setProductosSubidos(prev => prev.filter(p => p.id !== idProducto));
+    } catch (error) {
+      console.error("Error al eliminar producto:", error);
+    }
+  };
 
   const fetchNombreUsuario = async () => {
     try {
@@ -90,32 +98,50 @@ const fetchProductosSubidos = async () => {
     }, [usuarioId])
   );
 
-const renderItem = ({ item }) => (
-  <TouchableOpacity
-    style={styles.card}
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.card}
 
-  >
-    <Image source={{ uri: item.imagen }} style={styles.imagen} />
-    <View style={styles.detalles}>
-      <Text style={styles.nombre}>{item.nombre_producto}</Text>
-      <Text>Estado: {item.estado_del_producto}</Text>
-      <Text>Vendido: {item.vendido ? "Sí" : "No"}</Text>
-      <Text>Precio inicial: ${item.precio_base}</Text>
-      <Text>Ubicación: {item.ubicacion}</Text>
+    >
+      <Image source={{ uri: item.imagen }} style={styles.imagen} />
+      <View style={styles.detalles}>
+        <Text style={styles.nombre}>{item.nombre_producto}</Text>
+        <Text>Estado: {item.estado_del_producto}</Text>
+        <Text>Vendido: {item.vendido ? "Sí" : "No"}</Text>
+        <Text>Precio inicial: ${item.precio_base}</Text>
+        <Text>Ubicación: {item.ubicacion}</Text>
 
-      {/* Texto adicional basado en estadoVenta */}
-      {item.estadoVenta === "vendido" && (
-        <Text style={{ color: 'green', fontWeight: 'bold' }}>Vendido con éxito</Text>
-      )}
-      {item.estadoVenta === "en_publicacion" && (
-        <Text style={{ color: 'blue', fontWeight: 'bold' }}>Producto en publicación</Text>
-      )}
-      {item.estadoVenta === "no_vendido" && (
-        <Text style={{ color: 'red', fontWeight: 'bold' }}>Su producto no se logró vender</Text>
-      )}
-    </View>
-  </TouchableOpacity>
-);
+        {/* Texto adicional basado en estadoVenta */}
+        {item.estadoVenta === "vendido" && (
+          <Text style={{ color: 'green', fontWeight: 'bold' }}>Vendido con éxito</Text>
+        )}
+        {item.estadoVenta === "en_publicacion" && (
+          <Text style={{ color: 'blue', fontWeight: 'bold' }}>Producto en publicación</Text>
+        )}
+        {item.estadoVenta === "no_vendido" && (
+          <>
+      <Text style={{ color: 'red', fontWeight: 'bold' }}>Su producto no se logró vender</Text>
+
+      <View style={{ flexDirection: 'row', marginTop: 10 }}>
+        <TouchableOpacity
+          style={[styles.boton, { backgroundColor: '#4CAF50' }]}
+          onPress={() => console.log("Publicar presionado")}
+        >
+          <Text style={styles.botonTexto}>Publicar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.boton, { backgroundColor: '#F44336', marginLeft: 10 }]}
+          onPress={() => eliminarProducto(item.id)}
+        >
+          <Text style={styles.botonTexto}>Retirar</Text>
+        </TouchableOpacity>
+      </View>
+    </>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: '#E6F0FF', padding: 10 }}>
@@ -189,6 +215,15 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 20,
     backgroundColor: '#BB6161',
+  },
+  boton: {
+  paddingVertical: 8,
+  paddingHorizontal: 16,
+  borderRadius: 10,
+  },
+  botonTexto: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 
