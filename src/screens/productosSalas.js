@@ -170,12 +170,18 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   botonInscribirse: {
-    backgroundColor: '#004a99',
+    backgroundColor: '#28a745',
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 25,
     marginBottom: 20,
     alignSelf: 'center', // para centrar el botón horizontalmente
+  },
+  textoBoton: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
 
