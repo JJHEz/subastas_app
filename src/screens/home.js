@@ -1,21 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { collection, getDocs } from "firebase/firestore";
 import database from "../config/firebase";
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { FAB } from 'react-native-paper';
-
-//home donde se muestran todos los productos
 
 const Home = ({ navigation }) => {
   const route = useRoute();
   const { idUsuario } = route.params;
-  const idDelUsuarioQueIngreso = idUsuario;  //--------> Pueden usar este id para hacer todas sus consultas en la base de datos
-  console.log("Ingreso el usuario con id: " + idDelUsuarioQueIngreso);
+  const idDelUsuarioQueIngreso = idUsuario;
 
-  const { id: usuarioId } = route.params || {}; // captura el id del usuario desde la URL
-  const [userId, setUserId] = useState(usuarioId || null); // guarda el id para uso libre
+  const [userId, setUserId] = useState(idUsuario || null);
 
   const [productos, setProductos] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -27,61 +23,59 @@ const Home = ({ navigation }) => {
   const [open, setOpen] = useState(false);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
   const [categoriasDropDown, setCategoriasDropDown] = useState([]);
-  
-  useEffect(() => {
-    if (userId) {
-      console.log("Usuario ID desde la URL:", userId);
-    }
-  }, [userId]);
 
-  useEffect(() => {
-    const fetchCategorias = async () => {
-      try {
-        const snapshot = await getDocs(collection(database, "categoria"));
-        const map = {};
-        const listaDropDown = [];
+  // Carga categorías y productos cada vez que la pantalla está en foco
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCategorias = async () => {
+        try {
+          const snapshot = await getDocs(collection(database, "categoria"));
+          const map = {};
+          const listaDropDown = [];
 
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          map[doc.id] = data.nombre_categoria;
-          listaDropDown.push({ label: data.nombre_categoria, value: doc.id });
-        });
-        setCategoriasMap(map);
-        setCategoriasDropDown(listaDropDown);
-        setCategoriasCargadas(true);
-      } catch (error) {
-        console.error("Error al obtener categorías:", error);
-      }
-    };
-  
-    fetchCategorias();
-  }, []);
-  
-  useEffect(() => {
-    if (!categoriasCargadas) return;
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            map[doc.id] = data.nombre_categoria;
+            listaDropDown.push({ label: data.nombre_categoria, value: doc.id });
+          });
 
-    const fetchData = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(database, "producto"));
-        const items = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const nombreCategoria = categoriasMap[String(data.id_categoria_fk)] || "Sin categoría";
-          
-          if (data.vendido === false) {
-            items.push({ id: doc.id, ...data, nombre_categoria: nombreCategoria });
-          }
-        });
-        console.log("Productos cargados:", items); // controlador de error DEBUG
-        setProductos(items);
-        setProductosFiltrados(items);
-      } catch (error) {
-        console.error("Error al obtener productos:", error); // controlador de error DEBUG
-      }
-    };
-  
-    fetchData();
-  }, [categoriasCargadas]);
+          setCategoriasMap(map);
+          setCategoriasDropDown(listaDropDown);
+          setCategoriasCargadas(true);
+        } catch (error) {
+          console.error("Error al obtener categorías:", error);
+        }
+      };
+
+      const fetchProductos = async () => {
+        if (!categoriasCargadas) return;
+        try {
+          const querySnapshot = await getDocs(collection(database, "producto"));
+          const items = [];
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const nombreCategoria = categoriasMap[String(data.id_categoria_fk)] || "Sin categoría";
+
+            if (data.vendido === false) {
+              items.push({ id: doc.id, ...data, nombre_categoria: nombreCategoria });
+            }
+          });
+
+          setProductos(items);
+          setProductosFiltrados(items);
+        } catch (error) {
+          console.error("Error al obtener productos:", error);
+        }
+      };
+
+      // Primero cargar categorías y después productos
+      fetchCategorias().then(() => fetchProductos());
+
+      return () => {
+        // Limpieza si necesaria
+      };
+    }, [categoriasCargadas, categoriasMap])
+  );
 
   const filtrarProductos = (texto, categoria = categoriaSeleccionada || '') => {
     setBusqueda(texto);
@@ -90,22 +84,21 @@ const Home = ({ navigation }) => {
     const filtrados = productos.filter((item) => {
       const coincideNombre = item.nombre_producto.toLowerCase().includes(textoLower);
       const coincideCategoria = categoria === '' || String(item.id_categoria_fk) === String(categoria);
-      return coincideNombre && coincideCategoria;      
+      return coincideNombre && coincideCategoria;
     });
 
     setProductosFiltrados(filtrados);
   };
-  
+
   const filtrarPorCategoria = (categoria) => {
     setCategoriaSeleccionada(categoria);
     filtrarProductos(busqueda, categoria);
   };
-  
 
-  const renderItem = ({ item }) => ( 
+  const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.burbuja}
-      onPress={() => navigation.navigate('Producto', { producto: item })}
+      onPress={() => navigation.navigate('Producto', { producto: item, userId: idDelUsuarioQueIngreso })}
     >
       <Image source={{ uri: item.imagen }} style={styles.imagen} />
       <View style={styles.detalles}>
@@ -114,8 +107,6 @@ const Home = ({ navigation }) => {
         <Text>Estado: {item.estado_del_producto}</Text>
         <Text>Base: ${item.precio_base}</Text>
         <Text>Ubicación: {item.ubicacion}</Text>
-        <Text>Inicio: {item.fecha_de_subasta} a las {item.hora_de_subasta}</Text>
-        <Text>Fin: {item.hora_fin_subasta}</Text>
         <Text>Vendido: {item.vendido ? "Sí" : "No"}</Text>
       </View>
     </TouchableOpacity>
@@ -123,13 +114,12 @@ const Home = ({ navigation }) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#007BFF" }}>
-      {
-        productos.length === 0 ? (
+      {productos.length === 0 ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text>No hay productos para mostrar.</Text>
         </View>
-    ) : (
-      <>
+      ) : (
+        <>
           <TextInput
             style={styles.buscador}
             placeholder="Buscar producto..."
@@ -146,8 +136,7 @@ const Home = ({ navigation }) => {
             setOpen={setOpen}
             setValue={(callback) => {
               const value = callback(categoriaSeleccionada);
-              setCategoriaSeleccionada(value);
-              filtrarProductos(busqueda, value);
+              filtrarPorCategoria(value);
             }}
             setItems={setCategoriasDropDown}
             placeholder="Selecciona una categoría"
@@ -163,16 +152,15 @@ const Home = ({ navigation }) => {
             renderItem={renderItem}
             contentContainerStyle={styles.container}
           />
-      </>
-    )
-  }
-  <FAB
-    style={styles.fab}
-    icon="plus"
-    onPress={() => navigation.navigate("subirProducto", { idDelUsuarioQueIngreso })}
-  />
-</View>
-);
+        </>
+      )}
+      <FAB
+        style={styles.fab}
+        icon="plus"
+        onPress={() => navigation.navigate("subirProducto", { idDelUsuarioQueIngreso })}
+      />
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -185,8 +173,8 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     borderRadius: 15,
-    flexDirection: "row", // Importante: alinearlos en fila
-    alignItems: "center", // Alinea imagen y texto verticalmente
+    flexDirection: "row",
+    alignItems: "center",
   },
   buscador: {
     backgroundColor: '#fff',
@@ -194,7 +182,7 @@ const styles = StyleSheet.create({
     margin: 10,
     borderRadius: 15,
     fontSize: 16,
-  }, 
+  },
   label: {
     color: '#fff',
     fontSize: 16,
@@ -219,14 +207,14 @@ const styles = StyleSheet.create({
     width: '97%',
   },
   imagen: {
-    width: 150,  // Tamaño fijo
+    width: 150,
     height: 150,
     borderRadius: 10,
-    marginRight: 20, // Espacio entre imagen y detalles
+    marginRight: 20,
     backgroundColor: '#ccc',
   },
   detalles: {
-    flex: 1, // Los detalles ocupan el resto del espacio
+    flex: 1,
   },
   nombre: {
     fontSize: 16,

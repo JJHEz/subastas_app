@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc, getDoc } from 'firebase/firestore';
+import { getDocs, collection, query, where, onSnapshot, doc, setDoc,updateDoc, getDoc, serverTimestamp ,orderBy, limit} from 'firebase/firestore';
 import database from '../config/firebase';
 import { useRoute } from '@react-navigation/native';
+
+
 
 export default function ProductoEnSubasta() {
   const [martillero, setMartillero] = useState(null);
@@ -15,12 +17,32 @@ export default function ProductoEnSubasta() {
   const [mejorPuja, setMejorPuja] = useState(null);
   const [ganadorActual, setGanadorActual] = useState(null);
   const [usuario, setUsuario] = useState(null);
-  const [estadoGanador, setEstadoGanador] = useState({estado:"cargando"});
+  const [estadoGanador, setEstadoGanador] = useState({estado:" "});
+  const [ganadores, setGanadores] = useState(null);
 
   const route = useRoute();
-  const { idDelUsuarioQueIngreso } = route.params;
+  const { idDelUsuarioQueIngreso, idMartillero } = route.params;
   const porcentajeIncrementoPujas = 0.10;
   const idUsuario = idDelUsuarioQueIngreso;
+
+
+  const obtenerHoraGlobal = async () => {
+    const docRef = doc(database, "tiempo", "hora");
+
+    // Establece el timestamp del servidor
+    await setDoc(docRef, { timestamp: serverTimestamp() });
+
+    // Espera un pequeño momento para que el servidor registre el timestamp
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Obtiene el documento actualizado con la hora del servidor
+    const docSnap = await getDoc(docRef);
+
+    // Convierte a milisegundos como lo hacía la función simulada
+    const timestamp = docSnap.data().timestamp.toDate().getTime();
+
+    return timestamp; // Mismo tipo: número en milisegundos
+  };
 
   useEffect(() => {
     const getUser = async () => {
@@ -42,7 +64,7 @@ export default function ProductoEnSubasta() {
       try {
         
         const martilleroRef = collection(database, 'martillero');
-        const snapshot = await getDocs(query(martilleroRef, where('__name__', '==', '1')));
+        const snapshot = await getDocs(query(martilleroRef, where('__name__', '==', idMartillero.toString())));
         if (!snapshot.empty) {
           const doc = snapshot.docs[0];
           setMartillero({ id: doc.id, ...doc.data() });
@@ -50,7 +72,7 @@ export default function ProductoEnSubasta() {
 
         
         const productosRef = collection(database, 'producto');
-        const productosSnap = await getDocs(query(productosRef, where('id_martillero_fk', '==', 1)));
+        const productosSnap = await getDocs(query(productosRef, where('id_martillero_fk', '==', idMartillero)));
         const productosData = productosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setProductos(productosData);
       } catch (error) {
@@ -62,48 +84,61 @@ export default function ProductoEnSubasta() {
   }, []);
 
   useEffect(() => {
-    if (productos.length === 0 || productoActual >= productos.length) return;
+    if (!martillero || productos.length === 0) return;
 
-    let hora_ini = martillero.hora_ini;
-    let hora_fin = martillero.hora_fin;
-    let nro_productos = martillero.nro_productos;
-   
-    const [horaInicio, minutoInicio] = hora_ini.split(':').map(Number);
-    const [horaFin, minutoFin] = hora_fin.split(':').map(Number);
-    
-    // Crear fechas usando el día actual
-    const ahora = new Date();
-    const fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), horaInicio, minutoInicio);
-    const fechaFin = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), horaFin, minutoFin);
+    let intervalId;
 
-    // Calcular la diferencia en milisegundos y convertir a segundos
-    const diferenciaSegundos = Math.floor((fechaFin - fechaInicio) / 1000);
+    const iniciarTemporizador = async () => {
+      const ahora = await obtenerHoraGlobal();
 
-    let segundos = parseInt(diferenciaSegundos);
-    let segundosPorProducto = segundos / nro_productos
+      const [horaInicio, minutoInicio] = martillero.hora_ini.split(':').map(Number);
+      const [horaFin, minutoFin] = martillero.hora_fin.split(':').map(Number);
 
-    setTiempoRestante(segundosPorProducto); // reiniciar tiempo a 60s para cada producto
+      const fechaInicio = new Date();
+      fechaInicio.setHours(horaInicio, minutoInicio, 0, 0);
 
-    intervaloRef.current = setInterval(() => {
-      setTiempoRestante(prev => {
-        if (prev > 1) {
-          return prev - 1;
-        } else {
-          clearInterval(intervaloRef.current);
+      const fechaFin = new Date();
+      fechaFin.setHours(horaFin, minutoFin, 0, 0);
 
-          if (productoActual < productos.length - 1) {
-            setProductoActual(prev => prev + 1);
-          } else {
-            setMostrarFinalizado(true);
-          }
+      const duracionTotal = Math.floor((fechaFin.getTime() - fechaInicio.getTime()) / 1000);
+      const duracionPorProducto = Math.floor(duracionTotal / martillero.nro_productos);
 
-          return 0;
-        }
-      });
-    }, 1000);
+      const segundosDesdeInicio = Math.floor((ahora - fechaInicio.getTime()) / 1000);
+
+      if (segundosDesdeInicio >= 0 && segundosDesdeInicio < duracionTotal) {
+        const productoIndex = Math.floor(segundosDesdeInicio / duracionPorProducto);
+        const tiempoRestanteActual = duracionPorProducto - (segundosDesdeInicio % duracionPorProducto);
+
+        setProductoActual(productoIndex);
+        setTiempoRestante(tiempoRestanteActual);
+
+        clearInterval(intervaloRef.current);  // Limpia el anterior
+        intervalId = setInterval(() => {
+          setTiempoRestante(prev => {
+            if (prev > 1) return prev - 1;
+            clearInterval(intervalId);
+
+            if (productoIndex + 1 < productos.length) {
+              setProductoActual(productoIndex + 1);
+              setTiempoRestante(duracionPorProducto); // Reiniciar tiempo
+              setEstadoGanador({estado:" "});
+            } else {
+              setMostrarFinalizado(true);
+            }
+            return 0;
+          });
+        }, 1000);
+        intervaloRef.current = intervalId;
+      } else {
+        setMostrarFinalizado(true);
+      }
+    };
+
+    iniciarTemporizador();
 
     return () => clearInterval(intervaloRef.current);
-  }, [productoActual, productos]);
+  }, [martillero, productos, productoActual]); // ← Incluye productoActual
+
 
   const producto = productos[productoActual];
 
@@ -129,7 +164,7 @@ useEffect(() => {
         setMejorPuja({
           id_producto_fk: ultimaPuja.id_producto_fk,
           id_usuario: ultimaPuja.id_usuario,
-          precio_oferta_actual: (ultimaPuja.precio_oferta_actual + (producto.precio_base * porcentajeIncrementoPujas))
+          precio_oferta_actual: parseInt((ultimaPuja.precio_oferta_actual + (producto.precio_base * porcentajeIncrementoPujas)))
         });
 
         setGanadorActual({
@@ -138,6 +173,13 @@ useEffect(() => {
           precio_oferta_actual: ultimaPuja.precio_oferta_actual,
           id_producto_fk: ultimaPuja.id_producto_fk
         });
+
+        const productoRef = doc(database, 'producto', producto.id.toString());
+        await updateDoc(productoRef, {
+          vendido: true
+        }); 
+
+
 
         if(usuarioData.nombre === usuario.nombre){
           setEstadoGanador({
@@ -156,7 +198,7 @@ useEffect(() => {
       }
     
     }else{
-      setMejorPuja({precio_oferta_actual: (producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas))});
+      setMejorPuja({precio_oferta_actual: parseInt((producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas)))});
       setGanadorActual({
         nombre: "Sin ofertas",
         precio_oferta_actual: (producto.precio_base)
@@ -183,7 +225,7 @@ const pujar = async () => {
     try {
       const primeraPuja = ofertaExistentes.docs[0].data();
       const precio = primeraPuja.precio_oferta_actual;
-      const incrementoDePuja = precio + (producto.precio_base * porcentajeIncrementoPujas);
+      const incrementoDePuja = parseInt(precio + (producto.precio_base * porcentajeIncrementoPujas));
 
       const refOferta = doc(database, 'oferta', ofertaExistentes.docs[0].id);
       await updateDoc(refOferta, {
@@ -197,7 +239,7 @@ const pujar = async () => {
 
   } else {
     try {
-      const primeraPuja = producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas);
+      const primeraPuja = parseInt(producto.precio_base + (producto.precio_base * porcentajeIncrementoPujas));
       await setDoc(doc(database, 'oferta', nuevoId.toString()), {
         precio_oferta_actual: primeraPuja,
         id_producto_fk: parseInt(producto.id),
@@ -232,18 +274,61 @@ const pujar = async () => {
         }
     }
 
-
-
-
-
-
-
- 
   const formatTiempo = (segundos) => {
     const min = Math.floor(segundos / 60);
     const seg = segundos % 60;
     return `${min}:${seg.toString().padStart(2, '0')}`;
   };
+
+
+  useEffect(() => {
+    const obtenerGanadores = async () => {
+      try {
+      
+        const ganadoresData = [];
+
+        for (const producto of productos) {
+          const q = query(
+            collection(database, "oferta"),
+            where("id_producto_fk", "==", parseInt(producto.id))
+          );
+
+          const ofertasSnap = await getDocs(q);
+          let mejorOferta = null;
+
+          ofertasSnap.forEach(doc => {
+            const data = doc.data();
+            if (!mejorOferta || data.precio_oferta_actual > mejorOferta.precio_oferta_actual) {
+              mejorOferta = data;
+            }
+          });
+
+          let nombreUsuario = "No hay ganador";
+          if (mejorOferta) {
+            const usuarioRef = doc(database, "usuario", mejorOferta.id_usuario.toString());
+            const usuarioSnap = await getDoc(usuarioRef);
+            nombreUsuario = usuarioSnap.exists() ? usuarioSnap.data().nombre : "Desconocido";
+          }
+          
+          ganadoresData.push({
+            nombre: producto.nombre_producto,
+            imagen: producto.imagen,
+            precioFinal: mejorOferta?.precio_oferta_actual || producto.precio_base,
+            ganador: nombreUsuario,
+          });
+        }
+
+        setGanadores(ganadoresData);
+      } catch (error) {
+        console.error("Error al obtener ganadores:", error);
+      }
+    };
+
+    if (mostrarFinalizado) {
+      obtenerGanadores();
+    }
+  }, [mostrarFinalizado]);
+
 
   return (
     <ScrollView style={styles.scrollContainer}>
@@ -272,7 +357,7 @@ const pujar = async () => {
 
             <View style={styles.bidContainer}>
               <Text style={styles.ganando}>Ganando{"\n"}{ganadorActual ? ganadorActual.nombre : "Cargando"}{"\n"}bs {ganadorActual ? ganadorActual.precio_oferta_actual : producto.precio_base}</Text>
-              <Text style={styles.subtitulo}>23 participantes</Text>
+              
               <Text style={[styles.estado, { color: estadoGanador.estado === '¡Vas Ganando!' ? 'green' : 'red' }]}>{estadoGanador.estado}</Text>
               <View style={styles.precioOferta}>
                 <Text style={styles.textoOferta}>Bs {mejorPuja ? mejorPuja.precio_oferta_actual : producto.precio_base}</Text>
@@ -283,9 +368,23 @@ const pujar = async () => {
             </View>
           </View>
         ) : mostrarFinalizado && (
+          
+          <View style={{ marginTop: 20 }}>
           <Text style={{ fontSize: 20, marginTop: 30, fontWeight: 'bold', color: 'white' }}>
             🎉🎉 Subasta finalizada 🎉🎉
           </Text>
+          <Text style={styles.titulo}>Ganadores de la subasta</Text>
+          {ganadores && ganadores.map((item, index) => (
+            <View key={index} style={styles.card}>
+              <Image source={{ uri: item.imagen }} style={styles.productImage} />
+              <Text style={styles.infoText}>Producto: {item.nombre}</Text>
+              <Text style={[styles.infoText, { color: item.ganador === 'No hay ganador' ? 'red' : 'green' }]}>Ganador: {item.ganador}</Text>
+              <Text style={styles.infoText}>Precio final: ${item.precioFinal.toFixed(2)}</Text>
+            </View>
+          ))}
+        </View>
+
+
         )}
       </View>
     </ScrollView>
@@ -389,4 +488,20 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  card: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 8,
+  padding: 10,
+  marginBottom: 10,
+  backgroundColor: '#f9f9f9',
+},
+productImage: {
+  width: '100%',
+  height: 150,
+  resizeMode: 'contain',
+  borderRadius: 8,
+  marginBottom: 10,
+},
+
 });

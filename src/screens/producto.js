@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useRoute } from '@react-navigation/native';
 
 const Producto = ({ route, navigation }) => {
-  const { producto } = route.params;
+  const { producto, userId } = route.params;
 
   return (
     <ScrollView style={styles.container}>
@@ -23,12 +24,8 @@ const Producto = ({ route, navigation }) => {
       </View>  
 
       <View style={styles.botones}>
-        <TouchableOpacity style={styles.botonInscribirse} onPress={() => /*alert('Inscrito')*/ navigation.navigate('Garantia')}>
+        <TouchableOpacity style={styles.botonInscribirse} onPress={() => /*alert('Inscrito')*/ navigation.navigate('Garantia',{userId, productoId: producto.id, producto})}>
           <Text style={styles.textoBoton}>Inscribirse a subasta</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.botonParticipar} onPress={() => navigation.goBack()}>
-          <Text style={styles.textoBoton}>Participar</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

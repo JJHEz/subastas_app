@@ -60,11 +60,11 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.welcomeText}>Bienvenido a YoloKiero</Text>
         <View>
           {errors.email && <Text style={styles.asterisk}> *</Text>}
-          <TextInput placeholder="E - Mail" style={styles.input} value={email} onChangeText={setEmail}/>
+          <TextInput placeholder="E - Mail" placeholderTextColor="#666" style={styles.input} value={email} onChangeText={setEmail}/>
         </View>
         <View>
           {errors.password && <Text style={styles.asterisk}> *</Text>}
-          <TextInput placeholder="Contraseña" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
+          <TextInput placeholder="Contraseña" placeholderTextColor="#666" secureTextEntry style={styles.input} value={password} onChangeText={setPassword}/>
         </View>
         <TouchableOpacity style={styles.loginButton} onPress={authenticationWithAccount}>
           <Text style={styles.loginButtonText}>Iniciar sesión</Text>
@@ -132,7 +132,8 @@ const styles = StyleSheet.create({
   },
 
   input: { 
-    borderBottomWidth: 1, 
+    borderBottomWidth: 1,
+    color: '#000',
     borderColor: '#ccc', 
     marginBottom: 15, 
     paddingVertical: 5 

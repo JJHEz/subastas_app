@@ -1,22 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import database from "../config/firebase";
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 
 const Salas = ({ navigation }) => {
-
   const route = useRoute();
   const { idUsuario } = route.params;
-  const idDelUsuarioQueIngreso = idUsuario;  //--------> Pueden usar este id para hacer todas sus consultas en la base de datos
-  console.log("id de sala Xd con usuario.- " + idDelUsuarioQueIngreso);
+  const idDelUsuarioQueIngreso = idUsuario;
 
-  const userId = 1;  // Aquí defines el ID del usuario de manera constante, puedes modificar este valor.
+  const userId = parseInt(idUsuario);
 
   const [salas, setSalas] = useState([]);
-  const [categorias, setCategorias] = useState({});  // Aquí almacenamos las categorías
+  const [categorias, setCategorias] = useState({});
+  const [nombreUsuario, setNombreUsuario] = useState("");
 
-  // Función para obtener las categorías
   const fetchCategorias = async () => {
     try {
       const snapshot = await getDocs(collection(database, "categoria"));
@@ -25,46 +23,63 @@ const Salas = ({ navigation }) => {
         const data = doc.data();
         categoriasData[doc.id] = data.nombre_categoria;
       });
-      setCategorias(categoriasData);  // Guardamos las categorías en el estado
+      setCategorias(categoriasData);
     } catch (error) {
       console.error("Error al obtener categorías:", error);
     }
   };
 
-  // Función para obtener las salas filtradas por id de usuario
   const fetchSalas = async () => {
     try {
-      // Aquí filtramos las salas donde el array 'participantes' contiene el id del usuario (userId).
       const salasQuery = query(
-        collection(database, "martillero"), 
-        where("participantes", "array-contains", userId)  // Filtrar por el id del usuario (ya es un número)
+        collection(database, "martillero"),
+        where("participantes", "array-contains", userId)
       );
-      
-      // Ejecutamos la consulta
+
       const querySnapshot = await getDocs(salasQuery);
       const salasData = [];
-
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         salasData.push({ id: doc.id, ...data });
       });
 
-      // Guardamos las salas filtradas en el estado
       setSalas(salasData);
     } catch (error) {
       console.error("Error al obtener salas:", error);
     }
   };
 
-  useEffect(() => {
-    fetchCategorias(); // Llamamos a la función que obtiene las categorías
-    fetchSalas();  // Llamamos a la función que obtiene las salas filtradas por el userId
-  }, [userId]);
+  const fetchNombreUsuario = async () => {
+    try {
+      const usuarioRef = doc(database, "usuario", String(idDelUsuarioQueIngreso));
+      const usuarioSnap = await getDoc(usuarioRef);
+      if (usuarioSnap.exists()) {
+        const data = usuarioSnap.data();
+        setNombreUsuario(data.nombre);
+      } else {
+        console.warn("No se encontró el usuario con ese ID.");
+      }
+    } catch (error) {
+      console.error("Error al obtener el nombre del usuario:", error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCategorias();
+      fetchSalas();
+      fetchNombreUsuario();
+
+      return () => {
+        // limpieza si necesario
+      };
+    }, [userId])
+  );
 
   const renderSalaItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.burbuja}  // Estilo similar al de los productos en Home.js
-      onPress={() => navigation.navigate('ProductosSalas', { salaId: item.id, idDelUsuarioQueIngreso:idDelUsuarioQueIngreso })}
+      style={styles.burbuja}
+      onPress={() => navigation.navigate('ProductosSalas', { salaId: item.id, idDelUsuarioQueIngreso: idDelUsuarioQueIngreso })}
     >
       <View style={styles.detalles}>
         <Text style={styles.nombre}>Sala: {item.id}</Text>
@@ -79,7 +94,7 @@ const Salas = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Salas del Usuario {userId}</Text>
+      <Text style={styles.header}>Salas de {nombreUsuario || `usuario ${userId}`}</Text>
       {salas.length === 0 ? (
         <Text>No hay salas disponibles para este usuario.</Text>
       ) : (
@@ -96,25 +111,25 @@ const Salas = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#007BFF', // Aquí se establece el color de fondo como el de Home.js
+    backgroundColor: '#007BFF',
     padding: 20,
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#fff', // Para que el texto del encabezado sea visible sobre el fondo azul
+    color: '#fff',
   },
   burbuja: {
     backgroundColor: "#f0f0f0",
     padding: 10,
     marginBottom: 10,
     borderRadius: 15,
-    flexDirection: "row", // Alineamos los elementos en fila
-    alignItems: "center", // Alineamos verticalmente la imagen y el texto
+    flexDirection: "row",
+    alignItems: "center",
   },
   detalles: {
-    flex: 1, // Los detalles ocupan el resto del espacio
+    flex: 1,
   },
   nombre: {
     fontSize: 16,
@@ -124,3 +139,4 @@ const styles = StyleSheet.create({
 });
 
 export default Salas;
+

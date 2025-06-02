@@ -1,30 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as ImagePicker from 'expo-image-picker';
+import database  from '../config/firebase';
+import { useRoute } from '@react-navigation/native';
+import { 
+  collection, 
+  getDocs,
+  getDoc, 
+  doc, 
+  setDoc,
+  updateDoc, 
+  arrayUnion 
+} from 'firebase/firestore';
 
 export default function Garantia() {
-  //const { producto} = route.params;
-
   const [qrData, setQrData] = useState('');
   const [imageUri, setImageUri] = useState('');
   const [estadoPago, setEstadoPago] = useState('pendiente');
-  const usuarioID = 'U123';
-  const subastaID = 'S456';
-  const monto = 100;
+  const [nombreUsuario, setNombreUsuario] = useState('');
+  const [comprobanteGenerado, setComprobanteGenerado] = useState(false); // Para verificar si se generó el comprobante
+  const route = useRoute();
+  const { userId, productoId, producto } = route.params || {};
+  
+  const idSala = producto?.id_martillero_fk;
+  const garantia = producto?.garantia || 0; // Asignar un valor por defecto si no existe
+  const usuarioID = userId;  // ID de usuario asignado dinamicamente 
+  const subastaID = idSala; // ID de sala que pertenece al producto
+  const monto = garantia; // Monto de la garantía del producto
+  const usuarioIDNum = Number(usuarioID);
+  const idSalaStr = String(idSala);
 
-  /*useEffect(() => {
-    // Opcionalmente puedes usar el usuario y producto aquí si es necesario.
-    console.log("Usuario:", usuario);
-    console.log("Producto:", producto);
-  }, [usuario, producto]);*/
 
+  // Generación del QR
   const generarQR = () => {
     const fecha = new Date().toISOString();
     const contenidoQR = `usuario:${usuarioID};subasta:${subastaID};monto:${monto};fecha:${fecha}`;
     setQrData(contenidoQR);
   };
 
+  // Obtener nombre de usuario desde Firestore
+  const obtenerNombrePorId = async (usuarioId) => {
+    try {
+      const docRef = doc(database, 'usuario', usuarioId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const nombre = docSnap.data().nombre;
+        console.log('Nombre del usuario:', nombre);
+        setNombreUsuario(nombre);  // Guardamos el nombre en el estado
+      } else {
+        console.log('No se encontró el documento');
+        setNombreUsuario(null);  // Si no se encuentra el documento, establecemos el nombre en null
+      }
+    } catch (error) {
+      console.error('Error al obtener el nombre del usuario:', error.message);
+      setNombreUsuario(null);  // En caso de error, establecemos el nombre en null
+    }
+  };
+
+  // Llamamos a obtenerNombrePorId solo cuando el componente se monta
+  useEffect(() => {
+    obtenerNombrePorId(usuarioID);  // Llamada a Firestore para obtener el nombre
+  }, []);  // El array vacío asegura que solo se llame una vez al cargar el componente
+
+  // Subir comprobante
   const subirComprobante = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -36,12 +76,49 @@ export default function Garantia() {
     }
   };
 
-  const enviarComprobante = () => {
-    if (!imageUri) return;
+  const enviarComprobante = async () => {
+    if (!imageUri || !nombreUsuario) return;
+
     setEstadoPago('enRevision');
-    setTimeout(() => {
-      setEstadoPago('validado');
-    }, 3000);
+
+    const obtenerFechaActual = () => {
+      const hoy = new Date();
+      const dia = String(hoy.getDate()).padStart(2, '0');
+      const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+      const anio = hoy.getFullYear();
+      return `${dia}-${mes}-${anio}`;
+    };
+
+    try {
+      const pagosSnapshot = await getDocs(collection( database, 'pago'));
+      const idsNumericos = pagosSnapshot.docs
+        .map(doc => parseInt(doc.id))
+        .filter(id => !isNaN(id));
+
+      const nuevoID = idsNumericos.length > 0
+        ? (Math.max(...idsNumericos) + 1).toString()
+        : '1';
+
+      await setDoc(doc( database, 'pago', nuevoID), {
+        usuario_fk: usuarioID,
+        estado: false,
+        monto: monto,
+        fecha_ini: obtenerFechaActual(),
+        fecha_fin: obtenerFechaActual(),
+        id_oferta_fk: 1,
+      });
+  // Actualizar array participantes en martillero (sala)
+    if (idSala) {
+      const salaRef = doc(database, 'martillero', idSalaStr);
+      await updateDoc(salaRef, {
+        participantes: arrayUnion(usuarioIDNum)
+      });
+    }
+      console.log(`✅ Pago guardado con ID: ${nuevoID}`);
+
+    } catch (error) {
+      console.error('Error al guardar el pago:', error.message);
+    }
   };
 
   const renderEstadoPago = () => {
@@ -53,12 +130,12 @@ export default function Garantia() {
   return (
     <View style={styles.fondo}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
+        <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
 
         <View style={styles.card}>
           <Text style={styles.titulo}>¿Desea participar en subastas?</Text>
-
           <Text style={styles.subtitulo}>Pago QR</Text>
+
           {qrData ? (
             <QRCode value={qrData} size={160} />
           ) : (
@@ -69,7 +146,7 @@ export default function Garantia() {
 
           <TouchableOpacity onPress={subirComprobante} style={styles.botonSubir}>
             <Image
-              source={require('../../assets/images/subir-archivo.png')} // puedes usar un ícono de clip 📎
+              source={require('../../assets/images/subir-archivo.png')}
               style={styles.iconoClip}
             />
             <Text style={styles.textoSubir}>Subir imagen de comprobante</Text>

@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useRoute } from '@react-navigation/native';
 
-const Producto = ({ route, navigation }) => {
-  const { producto } = route.params;
+const DetalleGanado = ({ route, navigation }) => {
+  const { producto, userId } = route.params;
 
   return (
     <ScrollView style={styles.container}>
@@ -18,12 +19,12 @@ const Producto = ({ route, navigation }) => {
           <Text>Inicio: {producto.fecha_de_subasta} a las {producto.hora_de_subasta}</Text>
           <Text>Fin: {producto.hora_fin_subasta}</Text>
           <Text>Vendido: {producto.vendido ? "Sí" : "No"}</Text>
-          <Text>Descripción: {producto.descripcion || 'Sin descripción'}</Text>
+          <Text>Descripción: {producto.descripcion_producto || 'Sin descripción'}</Text>
         </View>
       </View>  
 
       <View style={styles.botones}>
-        <TouchableOpacity style={styles.botonInscribirse} onPress={() => /*alert('Inscrito')*/ navigation.navigate('Garantia')}>
+        <TouchableOpacity style={styles.botonInscribirse} onPress={() => /*alert('Inscrito')*/ navigation.navigate('Pagoproducto')}>
           <Text style={styles.textoBoton}>Inscribirse a subasta</Text>
         </TouchableOpacity>
 
@@ -96,4 +97,4 @@ const styles = StyleSheet.create({
 });
 
 
-export default Producto;
+export default DetalleGanado;
