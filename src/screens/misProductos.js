@@ -27,26 +27,58 @@ const MisProductos = ({ navigation }) => {
     }
   };
   
-  const fetchProductosSubidos = async () => {
-    try {
-      const productosQuery = query(
-        collection(database, "producto"),
-        where("id_usuario_fk", "==", usuarioId)
-      );
+const fetchProductosSubidos = async () => {
+  try {
+    const productosQuery = query(
+      collection(database, "producto"),
+      where("id_usuario_fk", "==", usuarioId)
+    );
 
-      const querySnapshot = await getDocs(productosQuery);
-      const productos = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    const querySnapshot = await getDocs(productosQuery);
 
-      setProductosSubidos(productos);
-      setCargando(false);
-    } catch (error) {
-      console.error("Error al obtener productos subidos:", error);
-      setCargando(false);
-    }
-  };
+    const productos = await Promise.all(querySnapshot.docs.map(async docProd => {
+      const data = docProd.data();
+      const idMartillero = data.id_martillero_fk;
+      let estadoVenta = "";
+
+      if (data.vendido) {
+        estadoVenta = "vendido";
+      } else {
+        try {
+          const martilleroDoc = await getDoc(doc(database, "martillero", String(idMartillero)));
+          if (martilleroDoc.exists()) {
+            const martilleroData = martilleroDoc.data();
+            const [dia, mes, anio] = martilleroData.fecha_ini.split('-').map(Number);
+            const [hora, minuto] = martilleroData.hora_ini.split(':').map(Number);
+            const fechaHoraMartillero = new Date(anio, mes - 1, dia, hora, minuto);
+            const ahora = new Date();
+
+            if (fechaHoraMartillero > ahora) {
+              estadoVenta = "en_publicacion";
+            } else {
+              estadoVenta = "no_vendido";
+            }
+          }
+        } catch (e) {
+          console.error("Error al obtener datos del martillero:", e);
+        }
+      }
+
+      return {
+        id: docProd.id,
+        ...data,
+        estadoVenta,
+      };
+    }));
+
+    setProductosSubidos(productos);
+    setCargando(false);
+  } catch (error) {
+    console.error("Error al obtener productos subidos:", error);
+    setCargando(false);
+  }
+};
+
 
   useFocusEffect(
     useCallback(() => {
@@ -58,21 +90,32 @@ const MisProductos = ({ navigation }) => {
     }, [usuarioId])
   );
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('Producto', { idProducto: item.id, producto: item })}
-    >
-      <Image source={{ uri: item.imagen }} style={styles.imagen} />
-      <View style={styles.detalles}>
-        <Text style={styles.nombre}>{item.nombre_producto}</Text>
-        <Text>Estado: {item.estado_del_producto}</Text>
-        <Text>Vendido: {item.vendido ? "Sí" : "No"}</Text>
-        <Text>Precio inicial: ${item.precio_base}</Text>
-        <Text>Ubicación: {item.ubicacion}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+const renderItem = ({ item }) => (
+  <TouchableOpacity
+    style={styles.card}
+
+  >
+    <Image source={{ uri: item.imagen }} style={styles.imagen} />
+    <View style={styles.detalles}>
+      <Text style={styles.nombre}>{item.nombre_producto}</Text>
+      <Text>Estado: {item.estado_del_producto}</Text>
+      <Text>Vendido: {item.vendido ? "Sí" : "No"}</Text>
+      <Text>Precio inicial: ${item.precio_base}</Text>
+      <Text>Ubicación: {item.ubicacion}</Text>
+
+      {/* Texto adicional basado en estadoVenta */}
+      {item.estadoVenta === "vendido" && (
+        <Text style={{ color: 'green', fontWeight: 'bold' }}>Vendido con éxito</Text>
+      )}
+      {item.estadoVenta === "en_publicacion" && (
+        <Text style={{ color: 'blue', fontWeight: 'bold' }}>Producto en publicación</Text>
+      )}
+      {item.estadoVenta === "no_vendido" && (
+        <Text style={{ color: 'red', fontWeight: 'bold' }}>Su producto no se logró vender</Text>
+      )}
+    </View>
+  </TouchableOpacity>
+);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#E6F0FF', padding: 10 }}>
