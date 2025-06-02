@@ -94,7 +94,7 @@ const Salas = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={{ alignItems: 'center', marginTop: 30, marginBottom: 5 }}>
+      <View style={{ alignItems: 'center', marginTop: 5, marginBottom: 5 }}>
             <Image
               source={require('../../assets/images/logo.png')} // Ruta relativa a tu archivo
               style={styles.logo}
