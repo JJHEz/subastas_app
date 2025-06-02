@@ -76,7 +76,7 @@ const MisProductos = ({ navigation }) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#E6F0FF', padding: 10 }}>
-      <View style={{ alignItems: 'center', marginTop: 30, marginBottom: 5 }}>
+      <View style={{ alignItems: 'center', marginTop: 5, marginBottom: 5 }}>
       <Image
         source={require('../../assets/images/logo.png')} // Ruta relativa a tu archivo
         style={styles.logo}
