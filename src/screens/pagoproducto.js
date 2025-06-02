@@ -6,6 +6,7 @@ import database  from '../config/firebase';
 import { doc, getDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { useRoute } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
+import { Linking } from 'react-native';
 
 export default function PagoProducto() {
   const [montoProducto, setMontoProducto] = useState(null);
@@ -14,17 +15,17 @@ export default function PagoProducto() {
   const [qrData, setQrData] = useState('');
   const [imageUri, setImageUri] = useState('');
   const [estadoPago, setEstadoPago] = useState('pendiente');
+  const [telefonoPublicador, setTelefonoPublicador] = useState('');
   const route = useRoute();
   const { idUsuario, idProducto, producto } = route.params || {};
   const productoIDnum = Number(idProducto);
   const navigation = useNavigation();
   // IDs para obtener los documentos
-  const productoID = idProducto;//'1'; // Cambia por el real
-  const martilleroID = String(producto?.id_martillero_fk); //'1'; // Cambia por el real
-  const usuarioID = idUsuario;//'1'; // Cambia por el real
+  const productoID = idProducto;
+  const martilleroID = String(producto?.id_martillero_fk); 
+  const usuarioID = idUsuario;
   const tipopago = 'Producto';
-
-
+  const idUsuarioProducto = String(producto?.id_usuario_fk);
   
   // Obtener datos usuario, producto y garantía
   useEffect(() => {
@@ -44,10 +45,7 @@ export default function PagoProducto() {
         console.log(doc.id, " => ", ofertaData);
         });
         setMontoProducto(precioOfertado);  
-        // Producto
-        //const docProducto = await getDoc(doc(database, 'producto', productoID));
-        //setMontoProducto(docProducto.exists() ? docProducto.data().precio_base || 0 : 0);
-
+       
         // Garantía
         const docGarantia = await getDoc(doc(database, 'martillero', martilleroID));
         setMontoGarantia(docGarantia.exists() ? docGarantia.data().garantia || 0 : 0);
@@ -55,11 +53,18 @@ export default function PagoProducto() {
         // Usuario
         const docUsuario = await getDoc(doc(database, 'usuario', usuarioID));
         setNombreUsuario(docUsuario.exists() ? docUsuario.data().nombre || '' : '');
+
+        // Usuario que publicó el producto
+        const docUsuarioPublicador = await getDoc(doc(database, 'usuario', idUsuarioProducto));
+        if (docUsuarioPublicador.exists()) {
+          setTelefonoPublicador(docUsuarioPublicador.data().telefono || '');
+        }
       } catch (error) {
         console.error('Error al obtener datos:', error);
         setMontoProducto(0);
         setMontoGarantia(0);
         setNombreUsuario('');
+        setTelefonoPublicador('');
       }
     };
 
@@ -115,7 +120,11 @@ export default function PagoProducto() {
 
     setEstadoPago('validado');
     setTimeout(() => {
-        navigation.navigate('TabNavigator',{idUsuario});
+      const numeroWhatsApp = '591'+ telefonoPublicador;
+      const mensaje = `Hola, soy ${nombreUsuario} y ya subí el comprobante de pago del producto.`;
+      const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
+      Linking.openURL(urlWhatsApp);  
+      navigation.navigate('TabNavigator',{idUsuario});
       }, 1500);
 
   } catch (error) {

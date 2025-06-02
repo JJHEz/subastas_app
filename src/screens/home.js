@@ -23,10 +23,27 @@ const Home = ({ navigation }) => {
   const [open, setOpen] = useState(false);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
   const [categoriasDropDown, setCategoriasDropDown] = useState([]);
+  const [nombreUsuario, setNombreUsuario] = useState("");
 
   // Carga categorías y productos cada vez que la pantalla está en foco
   useFocusEffect(
     useCallback(() => {
+
+      const fetchNombreUsuario = async () => {
+        try {
+          const snapshot = await getDocs(collection(database, "usuario"));
+          snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (String(doc.id) === String(idDelUsuarioQueIngreso)) {
+          setNombreUsuario(data.nombre);
+            }
+          });
+         }   catch (error) {
+          console.error("Error al obtener el nombre del usuario:", error);
+        }
+      };
+
+      
       const fetchCategorias = async () => {
         try {
           const snapshot = await getDocs(collection(database, "categoria"));
@@ -68,6 +85,7 @@ const Home = ({ navigation }) => {
         }
       };
 
+      fetchNombreUsuario();
       // Primero cargar categorías y después productos
       fetchCategorias().then(() => fetchProductos());
 
@@ -113,13 +131,24 @@ const Home = ({ navigation }) => {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#007BFF" }}>
+    <View style={{ flex: 1, backgroundColor: "#007BFF", padding: 10 }}>
+      <View style={{ alignItems: 'center', marginTop: 30, marginBottom: 5 }}>
+                  <Image
+                    source={require('../../assets/images/logo.png')} // Ruta relativa a tu archivo
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                </View>
+      
+      <Text style={styles.bienvenida}>Bienvenido {nombreUsuario ? nombreUsuario : '...'},</Text>
+      <Text style={styles.bienvenida}>¿Qué te interesa hoy?</Text>
       {productos.length === 0 ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text>No hay productos para mostrar.</Text>
         </View>
       ) : (
         <>
+        
           <TextInput
             style={styles.buscador}
             placeholder="Buscar producto..."
@@ -176,6 +205,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  bienvenida: {
+  fontSize: 24,
+  fontWeight: 'bold',
+  color: '#fff',
+  textAlign: 'center',
+  //marginTop: 10,
+  //marginBottom: 5,
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    marginBottom: 5,
+    marginTop: 30,
+  },
   buscador: {
     backgroundColor: '#fff',
     padding: 10,
@@ -197,7 +240,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 15,
     zIndex: 1000,
-    width: '97%',
+    width: '95.1%',
   },
   dropdownContainer: {
     marginHorizontal: 10,

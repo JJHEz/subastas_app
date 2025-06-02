@@ -14,6 +14,7 @@ import Salas from "../screens/salas";
 import ProductosSalas from "../screens/productosSalas";
 import ProductosGanados from "../screens/productosGanados";
 import PagoProducto from "../screens/pagoproducto";
+import MisProductos from "../screens/misProductos";
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import SignUpScreen from '../screens/SignUpScreen';
@@ -28,6 +29,7 @@ function TabNavigator( { route } ) {
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={({ route }) => ({
+        headerShown: false, // Ocultar el header en las pantallas del Tab Navigator
         tabBarActiveTintColor: '#007BFF',
         tabBarInactiveTintColor: 'gray',
         tabBarIcon: ({ color, size }) => {
@@ -39,15 +41,18 @@ function TabNavigator( { route } ) {
             iconName = 'people-outline';
           } else if (route.name === 'ProductosGanados') {
             iconName = 'gift-outline';
-          }
+          } else if (route.name === 'MisProductos') {
+            iconName = 'albums-outline'; // puedes usar otro ícono si prefieres
+      }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
-      <Tab.Screen name="Home" component={Home} options={{ title: "Productos" }} initialParams={{ idUsuario }} />
+      <Tab.Screen name="Home" component={Home} options={{ title: "Inicio" }} initialParams={{ idUsuario }} />
       <Tab.Screen name="Salas" component={Salas} options={{ title: "Salas" }} initialParams={{ idUsuario }} />
       <Tab.Screen name="ProductosGanados" component={ProductosGanados} options={{ title: "Ganados" }} initialParams={{ idUsuario }} />
+      <Tab.Screen name="MisProductos" component={MisProductos} options={{ title: "Mis Productos" }} initialParams={{ idUsuario }} />
     </Tab.Navigator>
   );
 }
