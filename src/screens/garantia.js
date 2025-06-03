@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
-import * as ImagePicker from 'expo-image-picker';
-import database  from '../config/firebase';
 import { useRoute } from '@react-navigation/native';
-import { 
-  collection, 
+import * as ImagePicker from 'expo-image-picker';
+import {
+  arrayUnion,
+  collection,
+  doc,
+  getDoc,
   getDocs,
-  getDoc, 
-  doc, 
   setDoc,
-  updateDoc, 
-  arrayUnion 
+  updateDoc
 } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
+import database from '../config/firebase';
 
 export default function Garantia() {
   const [qrData, setQrData] = useState('');
@@ -39,25 +39,28 @@ export default function Garantia() {
     setQrData(contenidoQR);
   };
 
-  // Obtener nombre de usuario desde Firestore
-  const obtenerNombrePorId = async (usuarioId) => {
-    try {
-      const docRef = doc(database, 'usuario', usuarioId);
-      const docSnap = await getDoc(docRef);
+  // Obtener nombre y email de usuario desde Firestore
+  const [emailUsuario, setEmailUsuario] = useState('');
 
-      if (docSnap.exists()) {
-        const nombre = docSnap.data().nombre;
-        console.log('Nombre del usuario:', nombre);
-        setNombreUsuario(nombre);  // Guardamos el nombre en el estado
-      } else {
-        console.log('No se encontró el documento');
-        setNombreUsuario(null);  // Si no se encuentra el documento, establecemos el nombre en null
-      }
-    } catch (error) {
-      console.error('Error al obtener el nombre del usuario:', error.message);
-      setNombreUsuario(null);  // En caso de error, establecemos el nombre en null
+const obtenerNombrePorId = async (usuarioId) => {
+  try {
+    const docRef = doc(database, 'usuario', usuarioId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      setNombreUsuario(data.nombre);
+      setEmailUsuario(data.correo_electronico);  // Guardar el correo
+    } else {
+      setNombreUsuario(null);
+      setEmailUsuario(null);
     }
-  };
+  } catch (error) {
+    setNombreUsuario(null);
+    setEmailUsuario(null);
+  }
+};
+
 
   // Llamamos a obtenerNombrePorId solo cuando el componente se monta
   useEffect(() => {
@@ -119,6 +122,30 @@ export default function Garantia() {
     } catch (error) {
       console.error('Error al guardar el pago:', error.message);
     }
+/////////////////////////////
+    try {
+    const response = await fetch('http://localhost:8082/send-payment-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: emailUsuario,
+        nombre: nombreUsuario
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      console.log('Correo de confirmación enviado');
+      setEstadoPago('validado');  // O el estado que quieras asignar
+    } else {
+      console.error('Error al enviar correo:', data.error);
+    }
+  } catch (error) {
+    console.error('Error en fetch:', error.message);
+  }
   };
 
   const renderEstadoPago = () => {
