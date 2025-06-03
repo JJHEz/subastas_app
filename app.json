@@ -4,11 +4,11 @@
     "slug": "Subasta",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/images/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,12 +17,18 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.davidhuancaledezma.Subasta"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/images/logo.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "632f067c-35f2-4950-b90a-1e68b1aa1d29"
+      }
     }
   }
 }
