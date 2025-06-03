@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { collection, getDocs, query, where, getDoc, doc, deleteDoc} from "firebase/firestore";
+import { collection, getDocs, query, where, getDoc, doc, deleteDoc,updateDoc} from "firebase/firestore";
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import database from "../config/firebase";
 import { FAB } from 'react-native-paper';
@@ -22,6 +22,47 @@ const MisProductos = ({ navigation }) => {
     }
   };
 
+  const actualizarMartilleroDelProducto = async (producto) => {
+  try {
+    const martillerosSnapshot = await getDocs(collection(database, "martillero"));
+    const ahora = new Date();
+
+    let nuevoIdMartillero = null;
+
+    martillerosSnapshot.forEach(docMart => {
+      const data = docMart.data();
+      const [dia, mes, anio] = data.fecha_ini.split('-').map(Number);
+      const [hora, minuto] = data.hora_ini.split(':').map(Number);
+      const fechaHoraMartillero = new Date(anio, mes - 1, dia, hora, minuto);
+
+      if (fechaHoraMartillero > ahora && !nuevoIdMartillero) {
+        nuevoIdMartillero = parseInt(docMart.id); // Asumiendo que el ID es numérico
+        console.log(`Nuevo martillero seleccionado: ${nuevoIdMartillero}`);
+      }
+    });
+
+    if (!nuevoIdMartillero) {
+      console.log("No hay martilleros disponibles con fecha futura.");
+      return;
+    }
+
+    // Actualizar en Firebase
+    const productoRef = doc(database, "producto", producto.id);
+    await updateDoc(productoRef, { id_martillero_fk: nuevoIdMartillero });
+
+    // Actualizar estado local sin recargar
+    setProductosSubidos(prev =>
+      prev.map(p =>
+        p.id === producto.id
+          ? { ...p, id_martillero_fk: nuevoIdMartillero, estadoVenta: "en_publicacion" }
+          : p
+      )
+    );
+  } catch (error) {
+    console.error("Error al actualizar martillero del producto:", error);
+  }
+}; 
+  
   const fetchNombreUsuario = async () => {
     try {
       const docRef = doc(database, "usuario", String(usuarioId));
@@ -125,7 +166,7 @@ const fetchProductosSubidos = async () => {
       <View style={{ flexDirection: 'row', marginTop: 10 }}>
         <TouchableOpacity
           style={[styles.boton, { backgroundColor: '#4CAF50' }]}
-          onPress={() => console.log("Publicar presionado")}
+          onPress={() => actualizarMartilleroDelProducto(item)}
         >
           <Text style={styles.botonTexto}>Publicar</Text>
         </TouchableOpacity>
