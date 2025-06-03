@@ -132,13 +132,16 @@ const Home = ({ navigation }) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#007BFF", padding: 10 }}>
-      <View style={{ alignItems: 'center', marginTop: 5, marginBottom: 5 }}>
+      <View style={styles.headerContainer}>
                   <Image
                     source={require('../../assets/images/logo.png')} // Ruta relativa a tu archivo
                     style={styles.logo}
                     resizeMode="contain"
                   />
-                </View>
+                <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.navigate('Login')}>
+                  <Text style={styles.logoutText}>Cerrar sesión</Text>
+                </TouchableOpacity>
+      </View>
       
       <Text style={styles.bienvenida}>Bienvenido {nombreUsuario ? nombreUsuario : '...'} !!!</Text>
       {productos.length === 0 ? (
@@ -270,6 +273,26 @@ const styles = StyleSheet.create({
     bottom: 20,
     backgroundColor: '#BB6161',
   },
+  headerContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingHorizontal: 10,
+  marginTop: 30,
+},
+
+logoutButton: {
+  backgroundColor: '#BB6161',
+  paddingVertical: 6,
+  paddingHorizontal: 12,
+  borderRadius: 10,
+},
+
+logoutText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: 14,
+}
 });
 
 export default Home;
