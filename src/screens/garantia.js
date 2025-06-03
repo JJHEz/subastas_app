@@ -1,5 +1,6 @@
 import { useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native';
 import {
   arrayUnion,
   collection,
@@ -22,7 +23,7 @@ export default function Garantia() {
   const [comprobanteGenerado, setComprobanteGenerado] = useState(false); // Para verificar si se generó el comprobante
   const route = useRoute();
   const { userId, productoId, producto } = route.params || {};
-  
+  const navigation = useNavigation();
   const idSala = producto?.id_martillero_fk;
   const garantia = producto?.garantia || 0; // Asignar un valor por defecto si no existe
   const usuarioID = userId;  // ID de usuario asignado dinamicamente 
@@ -30,6 +31,7 @@ export default function Garantia() {
   const monto = garantia; // Monto de la garantía del producto
   const usuarioIDNum = Number(usuarioID);
   const idSalaStr = String(idSala);
+  const idUsuario = usuarioID;
 
 
   // Generación del QR
@@ -118,6 +120,10 @@ const obtenerNombrePorId = async (usuarioId) => {
       });
     }
       console.log(`✅ Pago guardado con ID: ${nuevoID}`);
+      setEstadoPago('validado');
+      setTimeout(() => {
+        navigation.navigate('TabNavigator',{idUsuario});
+      }, 1500);
 
     } catch (error) {
       console.error('Error al guardar el pago:', error.message);
@@ -191,9 +197,9 @@ const obtenerNombrePorId = async (usuarioId) => {
             <Text style={styles.textoBoton}>Pagar</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity>
+          {/*<TouchableOpacity onPress={() => navigation.navigate('Home',{usuarioID})}>
             <Text style={styles.textoSaltar}>Saltar</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>*/}
 
           <View style={{ marginTop: 10 }}>{renderEstadoPago()}</View>
         </View>

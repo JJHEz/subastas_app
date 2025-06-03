@@ -23,10 +23,27 @@ const Home = ({ navigation }) => {
   const [open, setOpen] = useState(false);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
   const [categoriasDropDown, setCategoriasDropDown] = useState([]);
+  const [nombreUsuario, setNombreUsuario] = useState("");
 
   // Carga categorías y productos cada vez que la pantalla está en foco
   useFocusEffect(
     useCallback(() => {
+
+      const fetchNombreUsuario = async () => {
+        try {
+          const snapshot = await getDocs(collection(database, "usuario"));
+          snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (String(doc.id) === String(idDelUsuarioQueIngreso)) {
+          setNombreUsuario(data.nombre);
+            }
+          });
+         }   catch (error) {
+          console.error("Error al obtener el nombre del usuario:", error);
+        }
+      };
+
+      
       const fetchCategorias = async () => {
         try {
           const snapshot = await getDocs(collection(database, "categoria"));
@@ -68,6 +85,7 @@ const Home = ({ navigation }) => {
         }
       };
 
+      fetchNombreUsuario();
       // Primero cargar categorías y después productos
       fetchCategorias().then(() => fetchProductos());
 
@@ -113,13 +131,26 @@ const Home = ({ navigation }) => {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#007BFF" }}>
+    <View style={{ flex: 1, backgroundColor: "#007BFF", padding: 10 }}>
+      <View style={styles.headerContainer}>
+                  <Image
+                    source={require('../../assets/images/logo.png')} // Ruta relativa a tu archivo
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.navigate('Login')}>
+                  <Text style={styles.logoutText}>Cerrar sesión</Text>
+                </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.bienvenida}>Bienvenido {nombreUsuario ? nombreUsuario : '...'} !!!</Text>
       {productos.length === 0 ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text>No hay productos para mostrar.</Text>
         </View>
       ) : (
         <>
+        
           <TextInput
             style={styles.buscador}
             placeholder="Buscar producto..."
@@ -176,6 +207,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  bienvenida: {
+  fontSize: 24,
+  fontWeight: 'bold',
+  color: '#fff',
+  textAlign: 'center',
+  //marginTop: 10,
+  //marginBottom: 5,
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    marginBottom: 5,
+    marginTop: 30,
+  },
   buscador: {
     backgroundColor: '#fff',
     padding: 10,
@@ -197,7 +242,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 15,
     zIndex: 1000,
-    width: '97%',
+    width: '95.1%',
   },
   dropdownContainer: {
     marginHorizontal: 10,
@@ -228,6 +273,26 @@ const styles = StyleSheet.create({
     bottom: 20,
     backgroundColor: '#BB6161',
   },
+  headerContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingHorizontal: 10,
+  marginTop: 30,
+},
+
+logoutButton: {
+  backgroundColor: '#BB6161',
+  paddingVertical: 6,
+  paddingHorizontal: 12,
+  borderRadius: 10,
+},
+
+logoutText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: 14,
+}
 });
 
 export default Home;
