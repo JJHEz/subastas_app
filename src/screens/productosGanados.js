@@ -9,9 +9,23 @@ const ProductosGanados = ({ navigation }) => {
   const route = useRoute();
   const { idUsuario } = route.params || {};
   const usuarioId = parseInt(idUsuario);
-
+  const [nombreUsuario, setNombreUsuario] = useState("");
   const [productosGanados, setProductosGanados] = useState([]);
   const [cargando, setCargando] = useState(true);
+
+  
+  const fetchNombreUsuario = async () => {
+  try {
+    const docRef = doc(database, "usuario", idUsuario);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      setNombreUsuario(data.nombre);
+    }
+  } catch (error) {
+    console.error("Error al obtener nombre del usuario:", error);
+  }
+};
 
   const fetchProductosGanados = async () => {
     try {
@@ -48,6 +62,7 @@ const ProductosGanados = ({ navigation }) => {
     useCallback(() => {
       if (usuarioId) {
         setCargando(true);
+        fetchNombreUsuario();
         fetchProductosGanados();
       }
     }, [usuarioId])
@@ -74,6 +89,15 @@ const renderItem = ({ item }) => (
 
   return (
     <View style={{ flex: 1, backgroundColor: '#E6F0FF', padding: 10 }}>
+      <View style={{ alignItems: 'center', marginTop: 5, marginBottom: 5 }}>
+            <Image
+              source={require('../../assets/images/logo.png')} // Ruta relativa a tu archivo
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+      
+      <Text style={styles.header}>Productos ganados por {nombreUsuario ? nombreUsuario : '...'}</Text>
       {cargando ? (
         <Text style={{ textAlign: 'center', marginTop: 20 }}>Cargando productos ganados...</Text>
       ) : productosGanados.length === 0 ? (
@@ -97,6 +121,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 15,
     alignItems: 'center',
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    marginBottom: 5,
+    marginTop: 30,
   },
   imagen: {
     width: 100,

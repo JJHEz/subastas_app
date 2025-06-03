@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import database from "../config/firebase";
 import { useRoute, useFocusEffect } from '@react-navigation/native';
@@ -94,7 +94,14 @@ const Salas = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Salas de {nombreUsuario || `usuario ${userId}`}</Text>
+      <View style={{ alignItems: 'center', marginTop: 5, marginBottom: 5 }}>
+            <Image
+              source={require('../../assets/images/logo.png')} // Ruta relativa a tu archivo
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+      <Text style={styles.header}>Salas de {nombreUsuario || '...' }</Text>
       {salas.length === 0 ? (
         <Text>No hay salas disponibles para este usuario.</Text>
       ) : (
@@ -112,13 +119,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#007BFF',
-    padding: 20,
+    padding: 10,
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#fff',
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    marginBottom: 5,
+    marginTop: 30,
   },
   burbuja: {
     backgroundColor: "#f0f0f0",
