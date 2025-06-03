@@ -1,6 +1,5 @@
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { useNavigation } from '@react-navigation/native';
 import {
   arrayUnion,
   collection,
@@ -130,7 +129,7 @@ const obtenerNombrePorId = async (usuarioId) => {
     }
 /////////////////////////////
     try {
-    const response = await fetch('http://localhost:8082/send-payment-email', {
+    const response = await fetch('https://09a6-181-115-167-36.ngrok-free.app/send-payment-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
