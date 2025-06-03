@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
-import * as ImagePicker from 'expo-image-picker';
-import database  from '../config/firebase';
 import { useRoute } from '@react-navigation/native';
-import { 
-  collection, 
+import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native';
+import {
+  arrayUnion,
+  collection,
+  doc,
+  getDoc,
   getDocs,
-  getDoc, 
-  doc, 
   setDoc,
-  updateDoc, 
-  arrayUnion 
+  updateDoc
 } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
+import database from '../config/firebase';
 
 export default function Garantia() {
   const [qrData, setQrData] = useState('');
@@ -22,7 +23,7 @@ export default function Garantia() {
   const [comprobanteGenerado, setComprobanteGenerado] = useState(false); // Para verificar si se generó el comprobante
   const route = useRoute();
   const { userId, productoId, producto } = route.params || {};
-  
+  const navigation = useNavigation();
   const idSala = producto?.id_martillero_fk;
   const garantia = producto?.garantia || 0; // Asignar un valor por defecto si no existe
   const usuarioID = userId;  // ID de usuario asignado dinamicamente 
@@ -30,6 +31,7 @@ export default function Garantia() {
   const monto = garantia; // Monto de la garantía del producto
   const usuarioIDNum = Number(usuarioID);
   const idSalaStr = String(idSala);
+  const idUsuario = usuarioID;
 
 
   // Generación del QR
@@ -39,25 +41,28 @@ export default function Garantia() {
     setQrData(contenidoQR);
   };
 
-  // Obtener nombre de usuario desde Firestore
-  const obtenerNombrePorId = async (usuarioId) => {
-    try {
-      const docRef = doc(database, 'usuario', usuarioId);
-      const docSnap = await getDoc(docRef);
+  // Obtener nombre y email de usuario desde Firestore
+  const [emailUsuario, setEmailUsuario] = useState('');
 
-      if (docSnap.exists()) {
-        const nombre = docSnap.data().nombre;
-        console.log('Nombre del usuario:', nombre);
-        setNombreUsuario(nombre);  // Guardamos el nombre en el estado
-      } else {
-        console.log('No se encontró el documento');
-        setNombreUsuario(null);  // Si no se encuentra el documento, establecemos el nombre en null
-      }
-    } catch (error) {
-      console.error('Error al obtener el nombre del usuario:', error.message);
-      setNombreUsuario(null);  // En caso de error, establecemos el nombre en null
+const obtenerNombrePorId = async (usuarioId) => {
+  try {
+    const docRef = doc(database, 'usuario', usuarioId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      setNombreUsuario(data.nombre);
+      setEmailUsuario(data.correo_electronico);  // Guardar el correo
+    } else {
+      setNombreUsuario(null);
+      setEmailUsuario(null);
     }
-  };
+  } catch (error) {
+    setNombreUsuario(null);
+    setEmailUsuario(null);
+  }
+};
+
 
   // Llamamos a obtenerNombrePorId solo cuando el componente se monta
   useEffect(() => {
@@ -115,10 +120,38 @@ export default function Garantia() {
       });
     }
       console.log(`✅ Pago guardado con ID: ${nuevoID}`);
+      setEstadoPago('validado');
+      setTimeout(() => {
+        navigation.navigate('TabNavigator',{idUsuario});
+      }, 1500);
 
     } catch (error) {
       console.error('Error al guardar el pago:', error.message);
     }
+/////////////////////////////
+    try {
+    const response = await fetch('http://localhost:8082/send-payment-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: emailUsuario,
+        nombre: nombreUsuario
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      console.log('Correo de confirmación enviado');
+      setEstadoPago('validado');  // O el estado que quieras asignar
+    } else {
+      console.error('Error al enviar correo:', data.error);
+    }
+  } catch (error) {
+    console.error('Error en fetch:', error.message);
+  }
   };
 
   const renderEstadoPago = () => {
@@ -164,9 +197,9 @@ export default function Garantia() {
             <Text style={styles.textoBoton}>Pagar</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity>
+          {/*<TouchableOpacity onPress={() => navigation.navigate('Home',{usuarioID})}>
             <Text style={styles.textoSaltar}>Saltar</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>*/}
 
           <View style={{ marginTop: 10 }}>{renderEstadoPago()}</View>
         </View>
