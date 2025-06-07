@@ -142,6 +142,7 @@ export default function AddProductForm() {
         precio_base: parseFloat(precioBase),
         ubicacion: ubicacion,
         vendido:false,
+        pagado: false,
       });
       //alert("Producto guardado con éxito");
       setTitle('');
@@ -163,7 +164,7 @@ export default function AddProductForm() {
         [
           {
             text: "OK",
-            onPress: () => navigation.goBack()
+            onPress: () => navigation.navigate('TabNavigator', { idUsuario: idDelUsuarioQueIngreso }),
           }
         ]
       );

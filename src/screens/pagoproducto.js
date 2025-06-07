@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as ImagePicker from 'expo-image-picker';
 import database  from '../config/firebase';
-import { doc, getDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { useRoute } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import { Linking } from 'react-native';
@@ -26,7 +26,7 @@ export default function PagoProducto() {
   const usuarioID = idUsuario;
   const tipopago = 'Producto';
   const idUsuarioProducto = String(producto?.id_usuario_fk);
-  
+
   // Obtener datos usuario, producto y garantía
   useEffect(() => {
     const fetchDatos = async () => {
@@ -39,13 +39,12 @@ export default function PagoProducto() {
         let precioOfertado = 0;
         
         querySnapshot.forEach((doc) => {
-        // Aquí accedemos al campo 'precio_oferta_actual' de cada oferta
-        const ofertaData = doc.data();
-        precioOfertado = ofertaData.precio_oferta_actual || 0;
-        console.log(doc.id, " => ", ofertaData);
+          const ofertaData = doc.data();
+          precioOfertado = ofertaData.precio_oferta_actual || 0;
+          console.log(doc.id, " => ", ofertaData);
         });
         setMontoProducto(precioOfertado);  
-       
+
         // Garantía
         const docGarantia = await getDoc(doc(database, 'martillero', martilleroID));
         setMontoGarantia(docGarantia.exists() ? docGarantia.data().garantia || 0 : 0);
@@ -91,47 +90,53 @@ export default function PagoProducto() {
   };
 
   const enviarComprobante = async () => {
-  if (!imageUri || !nombreUsuario) return;
-  setEstadoPago('enRevision');
+    if (!imageUri || !nombreUsuario) return;
+    setEstadoPago('enRevision');
 
-  const obtenerFechaActual = () => {
-    const hoy = new Date();
-    const dia = String(hoy.getDate()).padStart(2, '0');
-    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-    const anio = hoy.getFullYear();
-    return `${dia}-${mes}-${anio}`;
-  };
+    const obtenerFechaActual = () => {
+      const hoy = new Date();
+      const dia = String(hoy.getDate()).padStart(2, '0');
+      const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+      const anio = hoy.getFullYear();
+      return `${dia}-${mes}-${anio}`;
+    };
 
-  try {
-    // Guardar el pago/comprobante en Firestore
-    await addDoc(collection(database, 'pagos'), {
-      usuario: nombreUsuario,
-      usuarioID: usuarioID,
-      montoProducto: montoProducto,
-      montoGarantia: montoGarantia,
-      montoTotal: montoProducto - montoGarantia,
-      fecha: obtenerFechaActual(),
-      estado: 'Pendiente',
-      tipopago: tipopago,
-      martilleroID: martilleroID,
-      productoID: productoID,
-      comprobanteUri: imageUri,
-    });
+    try {
+      // Guardar el pago/comprobante en Firestore
+      await addDoc(collection(database, 'pagos'), {
+        usuario: nombreUsuario,
+        usuarioID: usuarioID,
+        montoProducto: montoProducto,
+        montoGarantia: montoGarantia,
+        montoTotal: montoProducto - montoGarantia,
+        fecha: obtenerFechaActual(),
+        estado: 'Pendiente',
+        tipopago: tipopago,
+        martilleroID: martilleroID,
+        productoID: productoID,
+        comprobanteUri: imageUri,
+      });
 
-    setEstadoPago('validado');
-    setTimeout(() => {
-      const numeroWhatsApp = '591'+ telefonoPublicador;
-      const mensaje = `Hola, soy ${nombreUsuario} y ya subí el comprobante de pago del producto.`;
-      const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
-      Linking.openURL(urlWhatsApp);  
-      navigation.navigate('TabNavigator',{idUsuario});
+      // **Actualización del campo "pagado" en el producto después del pago exitoso**
+      const productoRef = doc(database, 'producto', productoID);
+      await updateDoc(productoRef, {
+        pagado: true // Actualizamos el campo "pagado" a true
+      });
+
+      setEstadoPago('validado');
+      setTimeout(() => {
+        const numeroWhatsApp = '591' + telefonoPublicador;
+        const mensaje = `Hola, soy ${nombreUsuario} y ya subí el comprobante de pago del producto.`;
+        const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
+        Linking.openURL(urlWhatsApp);  
+        navigation.navigate('TabNavigator', { idUsuario });
       }, 1500);
 
-  } catch (error) {
-    console.error('Error guardando el comprobante en BD:', error);
-    setEstadoPago('pendiente');
-  }
-};
+    } catch (error) {
+      console.error('Error guardando el comprobante en BD:', error);
+      setEstadoPago('pendiente');
+    }
+  };
 
   const renderEstadoPago = () => {
     if (estadoPago === 'pendiente') return null;
@@ -141,7 +146,7 @@ export default function PagoProducto() {
 
   if (montoProducto === null || montoGarantia === null || nombreUsuario === '') {
     return (
-      <View style={[styles.fondo, { justifyContent:'center', alignItems:'center' }]}>
+      <View style={[styles.fondo, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color="#007BFF" />
         <Text>Cargando datos...</Text>
       </View>
@@ -156,14 +161,14 @@ export default function PagoProducto() {
         <View style={styles.card}>
           <Text style={styles.titulo}>¿Desea completar el pago?</Text>
 
-          <Text style={styles.subtitulo}>Usuario: <Text style={{fontWeight:'bold'}}>{nombreUsuario}</Text></Text>
+          <Text style={styles.subtitulo}>Usuario: <Text style={{ fontWeight: 'bold' }}>{nombreUsuario}</Text></Text>
 
           <Text style={styles.subtitulo}>Detalles del pago</Text>
-          <Text>Monto total del producto: <Text style={{fontWeight:'bold'}}>{montoProducto} Bs</Text></Text>
-          <Text>Garantía: <Text style={{fontWeight:'bold'}}>{montoGarantia} Bs</Text></Text>
-          <Text>Monto total a pagar: <Text style={{fontWeight:'bold'}}>{montoTotalAPagar} Bs</Text></Text>
+          <Text>Monto total del producto: <Text style={{ fontWeight: 'bold' }}>{montoProducto} Bs</Text></Text>
+          <Text>Garantía: <Text style={{ fontWeight: 'bold' }}>{montoGarantia} Bs</Text></Text>
+          <Text>Monto total a pagar: <Text style={{ fontWeight: 'bold' }}>{montoTotalAPagar} Bs</Text></Text>
 
-          <Text style={[styles.subtitulo, { marginTop:20 }]}>Pago QR</Text>
+          <Text style={[styles.subtitulo, { marginTop: 20 }]}>Pago QR</Text>
           {qrData ? (
             <QRCode value={qrData} size={160} />
           ) : (
@@ -173,10 +178,7 @@ export default function PagoProducto() {
           )}
 
           <TouchableOpacity onPress={subirComprobante} style={styles.botonSubir}>
-            <Image
-              source={require('../../assets/images/subir-archivo.png')}
-              style={styles.iconoClip}
-            />
+            <Image source={require('../../assets/images/subir-archivo.png')} style={styles.iconoClip} />
             <Text style={styles.textoSubir}>Subir imagen de comprobante</Text>
           </TouchableOpacity>
 
@@ -191,10 +193,6 @@ export default function PagoProducto() {
           <TouchableOpacity style={styles.botonPagar} onPress={enviarComprobante} disabled={!imageUri}>
             <Text style={styles.textoBoton}>Pagar</Text>
           </TouchableOpacity>
-
-          {/*<TouchableOpacity>
-            <Text style={styles.textoSaltar}>Saltar</Text>
-          </TouchableOpacity>*/}
 
           <View style={{ marginTop: 10 }}>
             {renderEstadoPago()}
@@ -293,12 +291,6 @@ const styles = StyleSheet.create({
   textoBoton: {
     color: 'white',
     fontWeight: 'bold',
-  },
-  textoSaltar: {
-    color: '#555',
-    fontSize: 14,
-    marginTop: 15,
-    textDecorationLine: 'underline',
   },
   estadoValidado: {
     fontSize: 16,

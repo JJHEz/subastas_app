@@ -1,9 +1,54 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import { doc, getDoc } from 'firebase/firestore';
+import database from '../config/firebase';
 
 const Producto = ({ route, navigation }) => {
   const { producto, userId } = route.params;
+  const [isParticipante, setIsParticipante] = useState(false); // Estado para verificar si ya está inscrito
+
+  // Verificar si el usuario ya está inscrito en la sala
+  const verificarInscripcion = async () => {
+    try {
+      const salaRef = doc(database, 'martillero', String(producto.id_martillero_fk));
+      const salaDoc = await getDoc(salaRef);
+      
+      if (salaDoc.exists()) {
+        const salaData = salaDoc.data();
+        const participantes = salaData.participantes || [];
+
+        const usuarioIdNumerico = parseInt(userId, 10);
+        
+        // Comprobar si el usuario ya está inscrito
+        if (participantes.includes(usuarioIdNumerico)) {
+          setIsParticipante(true); // El usuario ya está inscrito
+        } else {
+          setIsParticipante(false); // El usuario no está inscrito
+        }
+      }
+    } catch (error) {
+      console.error('Error al verificar la inscripción:', error);
+    }
+  };
+
+  // Ejecutar la verificación cuando el componente se monta
+  useEffect(() => {
+    verificarInscripcion();
+  }, []); // Se ejecuta solo una vez cuando se monta el componente
+
+  const handleInscripcion = () => {
+    if (isParticipante) {
+      // Si ya está inscrito, mostrar la alerta
+      Alert.alert('Ya estás inscrito', 'Ya estás inscrito en la sala de este producto.');
+      setTimeout(() => {
+        navigation.goBack(); // Redirigir hacia atrás
+      }, 1500);
+    } else {
+      // Si no está inscrito, continuar con el proceso de inscripción
+      navigation.navigate('Garantia', { userId, productoId: producto.id, producto });
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -24,8 +69,10 @@ const Producto = ({ route, navigation }) => {
       </View>  
 
       <View style={styles.botones}>
-        <TouchableOpacity style={styles.botonInscribirse} onPress={() => /*alert('Inscrito')*/ navigation.navigate('Garantia',{userId, productoId: producto.id, producto})}>
-          <Text style={styles.textoBoton}>Inscribirse a subasta</Text>
+        <TouchableOpacity style={styles.botonInscribirse} onPress={handleInscripcion}>
+          <Text style={styles.textoBoton}>
+            {isParticipante ? 'Ya estás inscrito' : 'Inscribirse a subasta'}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -62,11 +109,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
-  texto: {
-    fontSize: 16,
-    marginBottom: 5,
-    textAlign: "center",
-  },
   botones: {
     alignItems: "center",
     marginTop: 10,
@@ -78,12 +120,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginBottom: 15,
   },
-  botonParticipar: {
-    backgroundColor: "#28a745",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-  },
   textoBoton: {
     color: "#fff",
     fontSize: 16,
@@ -91,6 +127,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
-
 
 export default Producto;
