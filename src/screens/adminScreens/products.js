@@ -3,80 +3,62 @@ import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { collection, getDocs } from 'firebase/firestore';
 import database from '../../config/firebase';
 
-export default function Products() {
-  const [usuarios, setUsuarios] = useState([]);
-  const [categorias, setCategorias] = useState([]);
-  
-  // Cargar usuarios
-  const cargarUsuarios = async () => {
+export default function ProductsPorUsuario() {
+  const [resumen, setResumen] = useState([]);
+
+  const cargarResumen = async () => {
     try {
-      const usuariosRef = collection(database, 'usuario');
-      const snapshot = await getDocs(usuariosRef);
-      const listaUsuarios = snapshot.docs.map(doc => doc.data());
-      setUsuarios(listaUsuarios);
-    } catch (error) {
-      console.log('Error al cargar los usuarios:', error);
-    }
-  };
+      const usuariosSnapshot = await getDocs(collection(database, 'usuario'));
+      const usuarios = usuariosSnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          nombre: doc.data().nombre,
+        }))
+        .filter(usuario => usuario.id !== '0'); // Excluir al admin
 
-  // Cargar categorías y contar productos
-  const cargarCategorias = async () => {
-    try {
-      const productosRef = collection(database, 'producto');
-      const snapshot = await getDocs(productosRef);
-      let categoriasMap = {};
+      const productosSnapshot = await getDocs(collection(database, 'producto'));
+      const productos = productosSnapshot.docs.map(doc => doc.data());
 
-      snapshot.docs.forEach(doc => {
-        const producto = doc.data();
-        const categoria = producto.nombre_categoria || 'Sin categoría';
+      const dataResumen = usuarios.map(usuario => {
+        const productosDelUsuario = productos.filter(
+          p => String(p.id_usuario_fk) === usuario.id
+        );
 
-        if (categoriasMap[categoria]) {
-          categoriasMap[categoria]++;
-        } else {
-          categoriasMap[categoria] = 1;
-        }
+        const totalProductos = productosDelUsuario.length;
+        const productosVendidos = productosDelUsuario.filter(p => p.vendido === true).length;
+
+        return {
+          nombre: usuario.nombre,
+          totalProductos,
+          productosVendidos,
+        };
       });
 
-      setCategorias(Object.entries(categoriasMap).map(([categoria, count]) => ({ categoria, count })));
+      setResumen(dataResumen);
     } catch (error) {
-      console.log('Error al cargar las categorías:', error);
+      console.log('Error al cargar el resumen de productos por usuario:', error);
     }
   };
 
   useEffect(() => {
-    cargarUsuarios();
-    cargarCategorias();
+    cargarResumen();
   }, []);
 
-  const renderUsuario = ({ item }) => (
-    <View style={styles.item}>
-      <Text>{item.nombre}</Text>
-      <Text>{item.correo_electronico}</Text>
-    </View>
-  );
-
-  const renderCategoria = ({ item }) => (
-    <View style={styles.item}>
-      <Text>{item.categoria}: {item.count} productos</Text>
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      <Text style={styles.name}>Nombre: {item.nombre}</Text>
+      <Text style={styles.text}>Productos: {item.totalProductos}</Text>
+      <Text style={styles.text}>Vendidos: {item.productosVendidos}</Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Panel de Administración</Text>
-
-      <Text style={styles.sectionTitle}>Usuarios</Text>
+      <Text style={styles.title}>Productos por Usuario</Text>
       <FlatList
-        data={usuarios}
+        data={resumen}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={renderUsuario}
-      />
-
-      <Text style={styles.sectionTitle}>Categorías</Text>
-      <FlatList
-        data={categorias}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={renderCategoria}
+        renderItem={renderItem}
       />
     </View>
   );
@@ -86,18 +68,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#FFA500',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: 'black',
+    textAlign: 'center',
   },
-  sectionTitle: {
-    fontSize: 18,
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 15,
+    marginBottom: 15,
+  },
+  name: {
     fontWeight: 'bold',
-    marginVertical: 10,
+    fontSize: 18,
+    marginBottom: 5,
   },
-  item: {
-    marginBottom: 10,
+  text: {
+    fontSize: 16,
   },
 });
+

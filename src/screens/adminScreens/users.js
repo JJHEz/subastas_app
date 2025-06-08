@@ -6,7 +6,6 @@ import database from '../../config/firebase';
 export default function Users() {
   const [usuarios, setUsuarios] = useState([]);
 
-  // Cargar usuarios
   const cargarUsuarios = async () => {
     try {
       const usuariosRef = collection(database, 'usuario');
@@ -23,22 +22,32 @@ export default function Users() {
   }, []);
 
   const renderUsuario = ({ item }) => (
-    <View style={styles.item}>
-      {/* Mostrar todos los atributos del usuario */}
-      {Object.entries(item).map(([key, value]) => (
-        <Text key={key} style={styles.text}>
-          <Text style={styles.bold}>{key}: </Text>
-          {value}
+    <View style={styles.card}>
+      {'nombre' in item && (
+        <Text style={styles.text}>
+          <Text style={styles.bold}>Nombre: </Text>
+          {item.nombre}
         </Text>
-      ))}
+      )}
+      {'telefono' in item && (
+        <Text style={styles.text}>
+          <Text style={styles.bold}>Teléfono: </Text>
+          {item.telefono}
+        </Text>
+      )}
+      {'correo_electronico' in item && (
+        <Text style={styles.text}>
+          <Text style={styles.bold}>Correo electrónico: </Text>
+          {item.correo_electronico}
+        </Text>
+      )}
     </View>
   );
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Panel de Administración</Text>
-
-      <Text style={styles.sectionTitle}>Usuarios registrados </Text>
+      <Text style={styles.sectionTitle}>Usuarios registrados</Text>
       <FlatList
         data={usuarios}
         keyExtractor={(item, index) => index.toString()}
@@ -52,22 +61,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#FFA500',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    textAlign: 'center',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginVertical: 10,
   },
-  item: {
-    marginBottom: 10,
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 15,
+    marginVertical: 8,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   text: {
     fontSize: 16,
+    marginBottom: 4,
   },
   bold: {
     fontWeight: 'bold',
