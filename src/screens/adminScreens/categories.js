@@ -1,72 +1,74 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { collection, getDocs } from 'firebase/firestore';
 import database from '../../config/firebase';
 
-export default function Categories() {
-  const [categorias, setCategorias] = useState([]);
+export default function CategoriasResumen() {
+  const [resumen, setResumen] = useState([]);
 
-  // Cargar categorías y contar productos por categoría
-  const cargarCategorias = async () => {
+  const cargarResumen = async () => {
     try {
-      // Obtener todas las categorías
-      const categoriasRef = collection(database, 'categoria');
-      const categoriasSnapshot = await getDocs(categoriasRef);
-      
-      // Crear un mapa de categorías para buscar más eficientemente
-      const categoriasMap = categoriasSnapshot.docs.reduce((acc, doc) => {
-        const data = doc.data();
-        acc[data.id] = data.nombre_categoria;
-        return acc;
-      }, {});
-      
-      // Contar los productos por categoría
-      const productosRef = collection(database, 'producto');
-      const productosSnapshot = await getDocs(productosRef);
+      // Obtener categorías (usamos doc.id como identificador)
+      const categoriasSnapshot = await getDocs(collection(database, 'categoria'));
+      const categorias = categoriasSnapshot.docs.map(doc => ({
+        id: doc.id, // este es el ID del documento (string)
+        nombre: doc.data().nombre_categoria,
+      }));
 
-      let categoriasContadas = {};
+      // Obtener martilleros
+      const martillerosSnapshot = await getDocs(collection(database, 'martillero'));
+      const martilleros = martillerosSnapshot.docs.map(doc => doc.data());
 
-      productosSnapshot.docs.forEach((doc) => {
-        const producto = doc.data();
-        const categoriaId = String(producto.id_categoria_fk); // Convertir el id_categoria_fk a String
+      // Construir resumen por categoría
+      const dataResumen = categorias.map(cat => {
+        const martillerosDeCategoria = martilleros.filter(
+          m => String(m.id_categoria_fk) === cat.id
+        );
+        const cantidadMartilleros = martillerosDeCategoria.length;
+        const totalParticipantes = martillerosDeCategoria.reduce(
+          (acc, m) => acc + (Array.isArray(m.participantes) ? m.participantes.length : 0),
+          0
+        );
 
-        // Obtener el nombre de la categoría desde el mapa
-        const nombreCategoria = categoriasMap[categoriaId] || 'Sin categoría';
-
-        // Contar la cantidad de productos por categoría
-        if (categoriasContadas[nombreCategoria]) {
-          categoriasContadas[nombreCategoria]++;
-        } else {
-          categoriasContadas[nombreCategoria] = 1;
-        }
+        return {
+          nombre_categoria: cat.nombre,
+          cantidad_martilleros: cantidadMartilleros,
+          total_participantes: totalParticipantes,
+        };
       });
 
-      // Convertir el mapa a un array para mostrarlo en la lista
-      setCategorias(Object.entries(categoriasContadas).map(([categoria, count]) => ({ categoria, count })));
+      setResumen(dataResumen);
     } catch (error) {
-      console.log('Error al cargar las categorías:', error);
+      console.log('Error al cargar el resumen:', error);
     }
   };
 
   useEffect(() => {
-    cargarCategorias();
+    cargarResumen();
   }, []);
 
-  const renderCategoria = ({ item }) => (
-    <View style={styles.item}>
-      <Text>{item.categoria}: {item.count} productos</Text>
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      <Text style={styles.title}>Categoría</Text>
+      <Text style={styles.text}>
+        <Text style={styles.bold}>Nombre_categoria: </Text>{item.nombre_categoria}
+      </Text>
+      <Text style={styles.text}>
+        <Text style={styles.bold}>Cantidad de martilleros: </Text>{item.cantidad_martilleros}
+      </Text>
+      <Text style={styles.text}>
+        <Text style={styles.bold}>Usuario participados: </Text>{item.total_participantes}
+      </Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Panel de Administración</Text>
-
-      <Text style={styles.sectionTitle}>Categorías</Text>
+      <Text style={styles.header}>Panel de Administración</Text>
       <FlatList
-        data={categorias}
+        data={resumen}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={renderCategoria}
+        renderItem={renderItem}
       />
     </View>
   );
@@ -76,18 +78,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#FFA500',
   },
-  title: {
+  header: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: 'black',
+    textAlign: 'center',
   },
-  sectionTitle: {
-    fontSize: 18,
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 15,
+    marginBottom: 15,
+  },
+  title: {
     fontWeight: 'bold',
-    marginVertical: 10,
-  },
-  item: {
+    fontSize: 18,
     marginBottom: 10,
+  },
+  text: {
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  bold: {
+    fontWeight: 'bold',
   },
 });

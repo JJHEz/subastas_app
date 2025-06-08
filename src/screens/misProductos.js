@@ -4,6 +4,7 @@ import { collection, getDocs, query, where, getDoc, doc, deleteDoc,updateDoc} fr
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import database from "../config/firebase";
 import { FAB } from 'react-native-paper';
+import { Alert } from 'react-native';
 
 const MisProductos = ({ navigation }) => {
   const route = useRoute();
@@ -57,6 +58,10 @@ const MisProductos = ({ navigation }) => {
           ? { ...p, id_martillero_fk: nuevoIdMartillero, estadoVenta: "en_publicacion" }
           : p
       )
+    );
+    Alert.alert(
+      "¡Producto publicado!",
+      `Su producto se publicó con éxito.\nSe asignó a la sala ${nuevoIdMartillero}.`
     );
   } catch (error) {
     console.error("Error al actualizar martillero del producto:", error);
@@ -228,7 +233,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     marginBottom: 5,
-    //marginTop: 30,
   },
   header: {
     fontSize: 24,
