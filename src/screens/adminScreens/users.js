@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { collection, getDocs } from 'firebase/firestore';
 import database from '../../config/firebase';
+import { useNavigation } from '@react-navigation/native'; // Asegúrate de importar esto para usar navigation
 
 export default function Users() {
   const [usuarios, setUsuarios] = useState([]);
+  const navigation = useNavigation();
 
   const cargarUsuarios = async () => {
     try {
@@ -47,7 +49,15 @@ export default function Users() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Panel de Administración</Text>
-      <Text style={styles.sectionTitle}>Usuarios registrados</Text>
+      <View style={styles.cierre}>
+        <Text style={styles.sectionTitle}>Usuarios registrados</Text>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text style={styles.logoutText}>Cerrar sesión</Text>
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={usuarios}
         keyExtractor={(item, index) => index.toString()}
@@ -92,5 +102,20 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: 'bold',
   },
+  cierre: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  logoutButton: {
+    backgroundColor: '#BB6161',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  logoutText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
 });
-
