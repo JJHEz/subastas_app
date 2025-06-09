@@ -54,7 +54,7 @@ async function enviarCorreos() {
 
     const horaIni = martillero.hora_ini; 
     const [hora, minutos] = horaIni.split(":").map(Number);
-
+    const idMar = doc.id;
     const diffHoras = hora - horaActual;
     const diffMinutos = minutos - minutosActuales;
 
@@ -88,7 +88,7 @@ async function enviarCorreos() {
           subject: "Recordatorio: Subasta próxima",
           html: `
             <p>Hola <b>${usuario.nombre}</b>,</p>
-            <p>Tu subasta comenzará en 10 minutos, a las ${horaIni}.</p>
+            <p>Tu subasta de la SALA ${idMar} comenzará en 10 minutos, a las ${horaIni}.</p>
             <p>¡Prepárate para participar!</p>
           `,
         };

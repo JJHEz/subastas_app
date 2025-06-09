@@ -1,7 +1,6 @@
 const cors = require('cors');
 const express = require('express');
 const nodemailer = require('nodemailer');
-require('dotenv').config({ path: './backend/.env' });
 const app = express();
 app.use(express.json());
 
@@ -26,7 +25,7 @@ app.post('/send-payment-email', async (req, res) => {
   const mailOptions = {
     from: process.env.GMAIL_USER,
     to: email,
-    subject: 'Pago recibido ✅',
+    subject: 'Pago recibido ',
     html: `<p>Hola <b>${nombre}</b>,</p><p>Gracias por tu pago. ¡Tu participación en la subasta está confirmada!</p>`
   };
 
