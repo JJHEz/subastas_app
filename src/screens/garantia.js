@@ -129,7 +129,7 @@ const obtenerNombrePorId = async (usuarioId) => {
     }
 /////////////////////////////
     try {
-    const response = await fetch('https://09a6-181-115-167-36.ngrok-free.app/send-payment-email', {
+    const response = await fetch(' https://8cf7cfbe-3fcd-4f29-83a0-875fca83d765-00-1ip6sqhf61u8y.riker.replit.dev/send-payment-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
