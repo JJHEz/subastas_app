@@ -31,7 +31,17 @@ export default function LoginScreen({ navigation }) {
       if (!querySnapshot.empty) {
         setCargando(false);
         let idUsuario = querySnapshot.docs[0].id;
-        navigation.navigate('TabNavigator', {idUsuario});
+        let usuario = querySnapshot.docs[0].data();// para admin
+
+      //Verificar si el usuario es administrador
+      if (usuario.correo_electronico === 'admin' && usuario.contraseña === 'admin') {
+        // Si es administrador, navegar al panel de administración
+        //navigation.navigate('AdminPanel');
+        navigation.navigate('AdminTabNavigator');
+      } else {
+        // Si no es administrador, navegar a la pantalla normal
+        navigation.navigate('TabNavigator', { idUsuario });
+      }
       } else {
         setCargando(false);
         console.log("Password o correo incorrectos");

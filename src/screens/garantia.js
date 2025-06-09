@@ -1,6 +1,5 @@
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { useNavigation } from '@react-navigation/native';
 import {
   arrayUnion,
   collection,
@@ -130,7 +129,7 @@ const obtenerNombrePorId = async (usuarioId) => {
     }
 /////////////////////////////
     try {
-    const response = await fetch('http://localhost:8082/send-payment-email', {
+    const response = await fetch(' https://8cf7cfbe-3fcd-4f29-83a0-875fca83d765-00-1ip6sqhf61u8y.riker.replit.dev/send-payment-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
